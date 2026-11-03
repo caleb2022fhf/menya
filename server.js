@@ -47,7 +47,12 @@ app.post('/api/ai', async (req, res) => {
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    if (!apiKey) {
+      return res.status(500).json({ error: "Gemini API Key ntabwo yashyizwe muri Environment Variables." });
+    }
+
+    // Twakoresheje gemini-2.5-flash (cyangwa ushobora gushyiramo gemini-2.0-flash)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -56,18 +61,28 @@ app.post('/api/ai', async (req, res) => {
     });
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mbabajwe no kubabwira ko ntabase kubona igisubizo.";
+    
+    if (data.error) {
+      console.error("Gemini API Error:", data.error);
+      return res.status(500).json({ error: `AI Error: ${data.error.message}` });
+    }
 
-    // Kubika muri Turso Database
-    await db.execute({
-      sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
-      args: [message, reply]
-    });
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mbabajwe no kubabwira ko ntashoboye kubona igisubizo.";
+
+    // Kubika muri Turso Database (Niba yananiwe kubika ntibibuza AI gusubiza)
+    try {
+      await db.execute({
+        sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
+        args: [message, reply]
+      });
+    } catch (dbErr) {
+      console.error("Turso DB Insert Error:", dbErr);
+    }
 
     res.json({ reply });
   } catch (error) {
-    console.error("AI Error:", error);
-    res.status(500).json({ error: "Habaye ikibazo mu kuvugana na AI." });
+    console.error("Server Error:", error);
+    res.status(500).json({ error: "Habaye ikibazo gikomeye muri Server." });
   }
 });
 
