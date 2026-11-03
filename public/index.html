@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menya - AI Social Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col justify-between items-center font-sans">
+  <!-- Header -->
+  <header class="w-full border-b border-zinc-800 p-4 flex justify-between items-center max-w-4xl">
+    <h1 class="text-2xl font-bold tracking-wider text-white">MENYA</h1>
+    <span class="text-xs bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full border border-zinc-700">Gemini AI Inside</span>
+  </header>
+
+  <!-- Chat Area -->
+  <main class="w-full max-w-4xl flex-1 flex flex-col justify-between p-4 overflow-hidden">
+    <div id="chatbox" class="flex-1 overflow-y-auto space-y-4 mb-4 p-4 rounded-xl border border-zinc-900 bg-zinc-950/50">
+      <div class="bg-zinc-900 text-zinc-300 p-3 rounded-lg max-w-xs">
+        Baza ikintu cyose, Menya AI iragufasha!
+      </div>
+    </div>
+
+    <!-- Input Form -->
+    <form id="ai-form" class="flex gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+      <input type="text" id="user-input" placeholder="Andika ubutumwa hano..." class="flex-1 bg-transparent px-4 py-2 outline-none text-white placeholder-zinc-500" required>
+      <button type="submit" class="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-zinc-200 transition">Ohereza</button>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('ai-form');
+    const input = document.getElementById('user-input');
+    const chatbox = document.getElementById('chatbox');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Display User Message
+      chatbox.innerHTML += `
+        <div class="flex justify-end">
+          <div class="bg-white text-black p-3 rounded-lg max-w-xs">${message}</div>
+        </div>
+      `;
+      input.value = '';
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      // Loading Indicator
+      const loadingId = Date.now();
+      chatbox.innerHTML += `
+        <div id="${loadingId}" class="bg-zinc-900 text-zinc-400 p-3 rounded-lg max-w-xs animate-pulse">
+          Menya AI ari gukora...
+        </div>
+      `;
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      try {
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+        
+        document.getElementById(loadingId).remove();
+        chatbox.innerHTML += `
+          <div class="bg-zinc-900 text-zinc-100 p-3 rounded-lg max-w-xs border border-zinc-800">
+            ${data.reply || data.error}
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById(loadingId).remove();
+        chatbox.innerHTML += `
+          <div class="bg-red-950 text-red-200 p-3 rounded-lg max-w-xs">
+            Habaye amakosa mu kumenyesha AI.
+          </div>
+        `;
+      }
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
