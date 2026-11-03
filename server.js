@@ -51,8 +51,8 @@ app.post('/api/ai', async (req, res) => {
       return res.status(500).json({ error: "Gemini API Key ntabwo yashyizwe muri Environment Variables." });
     }
 
-    // Twakoresheje gemini-2.5-flash (cyangwa ushobora gushyiramo gemini-2.0-flash)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Twahinduye twishyiramo gemini-3.8-flash nk'uko ibisabwa bigaragaza
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -69,7 +69,7 @@ app.post('/api/ai', async (req, res) => {
 
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mbabajwe no kubabwira ko ntashoboye kubona igisubizo.";
 
-    // Kubika muri Turso Database (Niba yananiwe kubika ntibibuza AI gusubiza)
+    // Kubika muri Turso Database
     try {
       await db.execute({
         sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
