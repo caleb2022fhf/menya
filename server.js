@@ -38,7 +38,7 @@ async function initDatabase() {
 }
 initDatabase();
 
-// AI Chat Endpoint
+// AI Chat Endpoint with Automatic Backup Models
 app.post('/api/ai', async (req, res) => {
   const { message } = req.body;
   if (!message) {
@@ -50,33 +50,45 @@ app.post('/api/ai', async (req, res) => {
     return res.status(500).json({ error: "GEMINI_API_KEY is missing in Vercel settings." });
   }
 
-  try {
-    // Initialize official Google Gen AI SDK
-    const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey });
+  
+  // Jerageza gukoresha Pro niba Flash ihuze, cyangwa Flash niba Pro ihuze
+  const availableModels = ['gemini-2.5-pro', 'gemini-2.5-flash'];
+  let reply = null;
+  let lastError = null;
 
-    // Call gemini-2.5-flash via SDK
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: message,
-    });
-
-    const reply = response.text || "Mbabajwe no kubabwira ko ntashoboye kubona igisubizo.";
-
-    // Save to Turso Database
+  for (const modelName of availableModels) {
     try {
-      await db.execute({
-        sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
-        args: [message, reply]
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: message,
       });
-    } catch (dbErr) {
-      console.error("Turso DB Error:", dbErr);
-    }
 
-    res.json({ reply });
-  } catch (error) {
-    console.error("Gemini SDK Error:", error);
-    res.status(500).json({ error: `AI Error: ${error.message || 'Failed to communicate with AI'}` });
+      if (response && response.text) {
+        reply = response.text;
+        break; // Yakunze! Hagarika gushakisha izindi.
+      }
+    } catch (err) {
+      console.warn(`Model ${modelName} failed, trying next... Error:`, err.message);
+      lastError = err.message;
+    }
   }
+
+  if (!reply) {
+    return res.status(500).json({ error: `AI System busy: ${lastError}` });
+  }
+
+  // Save to Turso Database
+  try {
+    await db.execute({
+      sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
+      args: [message, reply]
+    });
+  } catch (dbErr) {
+    console.error("Turso DB Error:", dbErr);
+  }
+
+  res.json({ reply });
 });
 
 app.get('*', (req, res) => {
