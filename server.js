@@ -14,14 +14,7 @@ const db = createClient({
 
 async function initDatabase() {
   try {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // Turemye table y'ibiganiro
     await db.execute(`
       CREATE TABLE IF NOT EXISTS ai_chats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,6 +23,34 @@ async function initDatabase() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Turemye table y'ubumenyi (Knowledge Base) yigenga kandi yibuka
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        keywords TEXT,
+        response TEXT
+      )
+    `);
+
+    // Niba table irimo ubusa, dushyiramo ubumenyi bw'ibanze (Seed Data)
+    const check = await db.execute("SELECT COUNT(*) as count FROM knowledge_base");
+    if (check.rows[0].count === 0) {
+      await db.execute({
+        sql: "INSERT INTO knowledge_base (keywords, response) VALUES (?, ?)",
+        args: ["irrigate,tomato,dry,sun,water,izuba,kuhira,inyanya,ubuhinzi", "Mu buhinzi bw'inyanya cyangwa ibihinga mu gihe cy'izuba, inama nziza ni ugukoresha uburyo bwo kuhira bw'ibitonyanga (drip irrigation) no gupfukira ubutaka n'ibyatsi byumye (mulching)."]
+      });
+      await db.execute({
+        sql: "INSERT INTO knowledge_base (keywords, response) VALUES (?, ?)",
+        args: ["overtake,curve,bend,hill,kunyuranaho,amakosi,umuhanda", "Amategeko y'umuhanda arabuzanya burundu kunyuranaho ahantu habi nko mu ikosi riremereye cyangwa aho utabona neza."]
+      });
+      await db.execute({
+        sql: "INSERT INTO knowledge_base (keywords, response) VALUES (?, ?)",
+        args: ["sombe,cassava,leaves,recipe,guteka,isombe", "Uburyo bwo guteka isombe iryoheye: Banza uteke amagangi y'imyumbati yose ashya neza, wongeremo ibitunguru, tungurusumu, amavuta, n'ubunyobwa."]
+      });
+      console.log("Default knowledge base seeded into Turso.");
+    }
+
     console.log("Turso Database initialized successfully.");
   } catch (err) {
     console.error("Database Init Error:", err);
@@ -37,56 +58,38 @@ async function initDatabase() {
 }
 initDatabase();
 
-// 2. Knowledge Base & Intelligent Scoring Engine
-const knowledgeBase = [
-  {
-    keywords: ["irrigate", "tomato", "dry", "sun", "water", "izuba", "kuhira", "inyanya", "ubuhinzi"],
-    response: "Mu buhinzi bw'inyanya cyangwa ibihhingwa mu gihe cy'izuba, inama nziza ni ugukoresha uburyo bwo kuhira bw'ibitonyanga (drip irrigation) no gupfukira ubutaka n'ibyatsi byumye (mulching) kugira ngo amazi adashira vuba."
-  },
-  {
-    keywords: ["soil", "fertility", "compost", "manure", "uburumbuke", "butaka", "ifumbire"],
-    response: "Kugira ngo wongere uburumbuke bw'ubutaka bwawe, jya ukoresha ifumbire y'imborera yatangiye kubora neza kandi ukore gahunda yo guhinduranya ibihhingwa (crop rotation) nk'ibishyimbo cyangwa amashaza."
-  },
-  {
-    keywords: ["overtake", "curve", "bend", "hill", "kunyuranaho", "amakosi", "umuhanda", "umugina"],
-    response: "Amategeko y'umuhanda arabuzanya burundu kunyuranaho (overtaking) ahantu habi nko mu ikosi riremereye, mu mpinga y'umugina, cyangwa aho utabona neza imbere yawe."
-  },
-  {
-    keywords: ["speed", "limit", "urban", "residential", "uvuduku", "mujyi", "gucengera"],
-    response: "Umuvuduku wemewe mu duce tw'imidugudu cyangwa imijyi (urban areas) ni kilometero 40 mu isaha (40 km/h) keretse niba ibyapa byerekana ikindi gipimo."
-  },
-  {
-    keywords: ["sombe", "cassava", "leaves", "recipe", "guteka", "isombe", "ubunyobwa"],
-    response: "Uburyo bwo guteka isombe iryoheye: Banza uteke amagangi y'imyumbati (isombe) yose ashya neza, wongeremo ibitunguru, tungurusumu, amavuta, n'ubunyobwa bw'umutsima kugira ngo igire uburyohe budasanzwe."
-  },
-  {
-    keywords: ["rice", "fried", "umuceri", "imboga"],
-    response: "Guteka umuceri w'imboga (fried rice): Jya ubanza uteke umuceri usanzwe wume neza. Hanyuma ukarange tungurusumu, karoti, n'ibihaza mu mavutamake, uvanze n'umuceri hamwe na soya sauce."
-  }
-];
-
-function getAIResponse(userMessage) {
+// 2. Intelligent Scoring Engine isoma muri Turso Database
+async function getAIResponse(userMessage) {
   const query = userMessage.toLowerCase();
-  let bestMatch = "Murakoze kubaza! Menya AI iracyitoza iyi ngingo. Ushobora kumbaza ibijyanye n'ubuhinzi bushya, amategeko y'umuhanda, cyangwa ubumenyi bwo guteka.";
+  let bestMatch = "Murakoze kubaza! Menya AI iracyitoza iyi ngingo. Ushobora kuyigisha iyi nshya cyangwa ukabaza ibindi.";
   let highestScore = 0;
 
-  for (const item of knowledgeBase) {
-    let score = 0;
-    for (const kw of item.keywords) {
-      if (query.includes(kw)) {
-        score += 1;
+  try {
+    // SOMA UBUMENYI BWOSE BURI MURI TURSO DATABASE
+    const result = await db.execute("SELECT * FROM knowledge_base");
+    const knowledgeBase = result.rows;
+
+    for (const item of knowledgeBase) {
+      const keywords = item.keywords.split(',');
+      let score = 0;
+      for (const kw of keywords) {
+        if (query.includes(kw.trim().toLowerCase())) {
+          score += 1;
+        }
+      }
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = item.response;
       }
     }
-    if (score > highestScore) {
-      highestScore = score;
-      bestMatch = item.response;
-    }
+  } catch (err) {
+    console.error("Error reading knowledge base:", err);
   }
 
   return bestMatch;
 }
 
-// 3. API Endpoint
+// 3. API Endpoint yo gusubiza
 app.post('/api/ai', async (req, res) => {
   const { message } = req.body;
   if (!message) {
@@ -94,22 +97,37 @@ app.post('/api/ai', async (req, res) => {
   }
 
   try {
-    const reply = getAIResponse(message);
+    const reply = await getAIResponse(message);
 
-    // Save chat interaction to Turso Database
-    try {
-      await db.execute({
-        sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
-        args: [message, reply]
-      });
-    } catch (dbErr) {
-      console.error("Turso DB Log Error:", dbErr);
-    }
+    // Bika amateka muri Turso
+    await db.execute({
+      sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
+      args: [message, reply]
+    });
 
     res.json({ reply });
   } catch (error) {
     console.error("Server Error:", error);
     res.status(500).json({ error: "Habaye ikosa kuri server." });
+  }
+});
+
+// 4. API Endpoint NSHYA yo kwigisha AI (Teach AI Autonomous Endpoint)
+app.post('/api/teach', async (req, res) => {
+  const { keywords, response } = req.body;
+  if (!keywords || !response) {
+    return res.status(400).json({ error: "Injiza keywords n'igisubizo." });
+  }
+
+  try {
+    await db.execute({
+      sql: "INSERT INTO knowledge_base (keywords, response) VALUES (?, ?)",
+      args: [keywords, response]
+    });
+    res.json({ success: true, message: "Menya AI yize ikintu gishya kandi ikibitse burundu!" });
+  } catch (error) {
+    console.error("Teach Error:", error);
+    res.status(500).json({ error: "Ntibyashobokaga kwigisha AI." });
   }
 });
 
@@ -119,7 +137,7 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Menya Custom AI running on port ${PORT}`);
+  console.log(`Menya Autonomous AI running on port ${PORT}`);
 });
 
 module.exports = app;
