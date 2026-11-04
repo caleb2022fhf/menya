@@ -2,45 +2,82 @@
 <html lang="rw">
 <head>
     <meta charset="UTF-8">
-    <title>Menya AI - Video Call Mwarimu</title>
+    <title>Menya AI - Ubuhinzi & Video Courses</title>
     <style>
-        body { background: #0f172a; color: #fff; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        #avatar-container { width: 320px; height: 320px; border-radius: 50%; overflow: hidden; border: 4px solid #3b82f6; margin-bottom: 20px; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .chat-box { width: 400px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 8px; border: none; }
-        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        body { 
+            background: #0f172a; 
+            color: #fff; 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+        }
+        h1 { color: #60a5fa; margin-bottom: 5px; }
+        p.subtitle { color: #94a3b8; margin-bottom: 25px; }
+
+        /* Agasanduku k'ikiganiro */
+        .chat-box { width: 100%; max-width: 500px; display: flex; gap: 10px; margin-bottom: 30px; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; outline: none; }
+        button { padding: 12px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #2563eb; }
+
+        /* Aho isomo rya video rishyirwa */
+        #course-container {
+            width: 100%;
+            max-width: 600px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #course-container h3 { color: #38bdf8; margin-top: 0; }
+        .video-wrapper { position: relative; width: 100%; height: 315px; background: #000; border-radius: 8px; overflow: hidden; margin-top: 10px; }
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
 
-    <!-- Aha niho mwarimu wa video azaba ari -->
-    <div id="avatar-container">
-        <video id="teacherVideo" autoplay muted loop src="default-idle.mp4"></video>
-    </div>
+    <h1>Menya AI Ubuhinzi</h1>
+    <p class="subtitle">Baza ikibazo cyose cy'ubuhinzi, Menya AI iguhe isomo rya video rikwiriye!</p>
 
     <div class="chat-box">
-        <input type="text" id="userInput" placeholder="Baza Menya AI...">
-        <button onclick="sendMessage()">Ohereza</button>
+        <input type="text" id="userInput" placeholder="Urugero: Ni gute nahira inyanya mu izuba?">
+        <button onclick="findCourse()">Shakisha Isomo</button>
+    </div>
+
+    <!-- Aho isomo na video bigaragarira -->
+    <div id="course-container">
+        <h3 id="courseTitle"></h3>
+        <p id="courseDesc"></p>
+        <div class="video-wrapper">
+            <!-- Ushobora gushyiramo video ya YouTube cyangwa iyindi -->
+            <iframe id="courseVideo" src="" allowfullscreen></iframe>
+        </div>
     </div>
 
     <script>
-        async function sendMessage() {
+        async function findCourse() {
             const message = document.getElementById('userInput').value;
             if (!message) return;
 
-            // 1. Tuvugana na Backend ya Menya AI
-            const res = await fetch('/api/ai', {
+            const res = await fetch('/api/get-course', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message })
             });
+
             const data = await res.json();
-            
-            console.log("Igisubizo cya AI:", data.reply);
-            
-            // 2. Aha ni ho wohereza igisubizo cya AI kuri D-ID/HeyGen API kugira ngo ikore video y'umwarimu avuga
-            // playTeacherVideo(data.reply);
+            if (data.course) {
+                document.getElementById('courseTitle').innerText = data.course.title;
+                document.getElementById('courseDesc').innerText = data.course.description;
+                document.getElementById('courseVideo').src = data.course.video_url;
+                document.getElementById('course-container').style.display = 'block';
+            }
         }
     </script>
 </body>
