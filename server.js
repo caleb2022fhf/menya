@@ -1,18 +1,18 @@
 const express = require('express');
 const path = require('path');
+const { GoogleGenAI } = require('@google/genai');
 const { createClient } = require('@libsql/client');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Guhuza na Turso Database
+// Initialize Turso Database
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL || '',
   authToken: process.env.TURSO_AUTH_TOKEN || '',
 });
 
-// Gukora Tables muri Database niba zitariho
 async function initDatabase() {
   try {
     await db.execute(`
@@ -31,14 +31,14 @@ async function initDatabase() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log("Database tables initialized.");
+    console.log("Database initialized.");
   } catch (err) {
-    console.error("Database initialization error:", err);
+    console.error("DB Init Error:", err);
   }
 }
 initDatabase();
 
-// API Endpoint yo kuvugana na Gemini AI ikoresheje Fallback System
+// AI Chat Endpoint
 app.post('/api/ai', async (req, res) => {
   const { message } = req.body;
   if (!message) {
@@ -47,69 +47,45 @@ app.post('/api/ai', async (req, res) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "Gemini API Key ntabwo yashyizwe muri Environment Variables." });
+    return res.status(500).json({ error: "GEMINI_API_KEY is missing in Vercel settings." });
   }
 
-  // Rutonde rwa models zikoreshwa niba imwe ifite overload/high demand
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-3.8-flash'
-  ];
-
-  let reply = null;
-  let lastError = null;
-
-  for (const model of models) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }]
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        reply = data.candidates[0].content.parts[0].text;
-        break; // Niba yakunze, hagarika loops
-      } else if (data.error) {
-        lastError = data.error.message;
-        console.warn(`Model ${model} failed: ${data.error.message}. Trying next model...`);
-      }
-    } catch (err) {
-      lastError = err.message;
-      console.warn(`Fetch failed for ${model}: ${err.message}`);
-    }
-  }
-
-  if (!reply) {
-    return res.status(500).json({ error: `AI Error: Gemini servers are busy. (${lastError})` });
-  }
-
-  // Kubika muri Turso Database
   try {
-    await db.execute({
-      sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
-      args: [message, reply]
-    });
-  } catch (dbErr) {
-    console.error("Turso DB Insert Error:", dbErr);
-  }
+    // Initialize official Google Gen AI SDK
+    const ai = new GoogleGenAI({ apiKey });
 
-  res.json({ reply });
+    // Call gemini-2.5-flash via SDK
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: message,
+    });
+
+    const reply = response.text || "Mbabajwe no kubabwira ko ntashoboye kubona igisubizo.";
+
+    // Save to Turso Database
+    try {
+      await db.execute({
+        sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
+        args: [message, reply]
+      });
+    } catch (dbErr) {
+      console.error("Turso DB Error:", dbErr);
+    }
+
+    res.json({ reply });
+  } catch (error) {
+    console.error("Gemini SDK Error:", error);
+    res.status(500).json({ error: `AI Error: ${error.message || 'Failed to communicate with AI'}` });
+  }
 });
 
-// Serve frontend routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server Menya is running on port ${PORT}`);
+  console.log(`Menya server running on port ${PORT}`);
 });
 
 module.exports = app;
