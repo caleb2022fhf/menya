@@ -2,7 +2,7 @@
 <html lang="rw">
 <head>
     <meta charset="UTF-8">
-    <title>Menya AI - Video Courses & Admin</title>
+    <title>Menya AI - E-Learning & Admin</title>
     <style>
         body { 
             background: #0f172a; 
@@ -22,14 +22,13 @@
         .nav-tabs button { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .nav-tabs button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-        .section { display: none; width: 100%; max-width: 600px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .section { display: none; width: 100%; max-width: 600px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); box-sizing: border-box; }
         .section.active { display: block; }
 
         input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; outline: none; box-sizing: border-box; }
         button.action-btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         button.action-btn:hover { background: #2563eb; }
 
-        /* Student Chat & Video Display */
         .chat-box { display: flex; gap: 10px; margin-bottom: 20px; }
         .chat-box input { margin-bottom: 0; flex: 1; }
         .ai-response { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3b82f6; font-size: 14px; }
@@ -43,6 +42,7 @@
     <h1>Menya AI Platform</h1>
     <p class="subtitle">Wiga ubuhinzi binyuze muri video, ukaba wanamubaza ikibazo ikagusubiza!</p>
 
+    <!-- Navigation Buttons zihuza Student na Admin -->
     <div class="nav-tabs">
         <button id="tabStudentBtn" class="active" onclick="switchTab('student')">Kwiga & Kubaza (Student)</button>
         <button id="tabAdminBtn" onclick="switchTab('admin')">Gucunga Amasomo (Admin)</button>
@@ -53,7 +53,7 @@
         <h3>Baza Ikibazo cy'Ubuhinzi</h3>
         <div class="chat-box">
             <input type="text" id="userInput" placeholder="Urugero: Nshaka kumenya uko nahira inyanya...">
-            <button class="action-btn" style="width: auto;" onclick="askAI()">Ohereza</button>
+            <button class="action-btn" style="width: auto;" id="askBtn" onclick="askAI()">Ohereza</button>
         </div>
 
         <div id="aiAnswerContainer" style="display: none;">
@@ -73,75 +73,106 @@
         <input type="text" id="adminVideoUrl" placeholder="YouTube Embed URL (Urugero: https://www.youtube.com/embed/...)">
         <textarea id="adminDesc" placeholder="Ibisobanuro by'isomo..."></textarea>
         <input type="text" id="adminKeywords" placeholder="Keywords zitandukanijwe na koma (urugero: ifumbire,imborera,ubutaka)">
-        <button class="action-btn" onclick="addCourse()">Emeza Ubike Isomo</button>
+        <button class="action-btn" id="saveCourseBtn" onclick="addCourse()">Emeza Ubike Isomo</button>
         <p id="adminMsg" style="margin-top: 10px; font-size: 13px; text-align: center;"></p>
     </div>
 
     <script>
+        // Function yo guhindura hagati ya Student na Admin tabs
         function switchTab(tab) {
+            const studentSec = document.getElementById('studentSection');
+            const adminSec = document.getElementById('adminSection');
+            const studentBtn = document.getElementById('tabStudentBtn');
+            const adminBtn = document.getElementById('tabAdminBtn');
+
             if (tab === 'student') {
-                document.getElementById('studentSection').classList.add('active');
-                document.getElementById('adminSection').classList.remove('active');
-                document.getElementById('tabStudentBtn').classList.add('active');
-                document.getElementById('tabAdminBtn').classList.remove('active');
+                studentSec.classList.add('active');
+                adminSec.classList.remove('active');
+                studentBtn.classList.add('active');
+                adminBtn.classList.remove('active');
             } else {
-                document.getElementById('adminSection').classList.add('active');
-                document.getElementById('studentSection').classList.remove('active');
-                document.getElementById('tabAdminBtn').classList.add('active');
-                document.getElementById('tabStudentBtn').classList.remove('active');
+                adminSec.classList.add('active');
+                studentSec.classList.remove('active');
+                adminBtn.classList.add('active');
+                studentBtn.classList.remove('active');
             }
         }
 
+        // Function ikora iyo umunyeshuri abajije ikibazo
         async function askAI() {
-            const message = document.getElementById('userInput').value;
+            const inputEl = document.getElementById('userInput');
+            const message = inputEl.value.trim();
             if (!message) return;
 
-            const res = await fetch('/api/student/ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
+            const askBtn = document.getElementById('askBtn');
+            askBtn.innerText = "Birashakishwa...";
 
-            const data = await res.json();
-            if (data.course) {
-                document.getElementById('aiReplyText').innerText = data.answer;
-                document.getElementById('courseTitle').innerText = data.course.title;
-                document.getElementById('courseDesc').innerText = data.course.description;
-                document.getElementById('courseVideo').src = data.course.video_url;
-                document.getElementById('aiAnswerContainer').style.display = 'block';
+            try {
+                const res = await fetch('/api/student/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await res.json();
+                if (data.course) {
+                    document.getElementById('aiReplyText').innerText = data.answer;
+                    document.getElementById('courseTitle').innerText = data.course.title;
+                    document.getElementById('courseDesc').innerText = data.course.description;
+                    document.getElementById('courseVideo').src = data.course.video_url;
+                    document.getElementById('aiAnswerContainer').style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Habaye ikosa mu gusubiza.");
+            } finally {
+                askBtn.innerText = "Ohereza";
             }
         }
 
+        // Function ikora iyo Admin yemeje ko abika isomo rya video nshya
         async function addCourse() {
-            const title = document.getElementById('adminTitle').value;
-            const video_url = document.getElementById('adminVideoUrl').value;
-            const description = document.getElementById('adminDesc').value;
-            const keywords = document.getElementById('adminKeywords').value;
+            const title = document.getElementById('adminTitle').value.trim();
+            const video_url = document.getElementById('adminVideoUrl').value.trim();
+            const description = document.getElementById('adminDesc').value.trim();
+            const keywords = document.getElementById('adminKeywords').value.trim();
             const msgEl = document.getElementById('adminMsg');
 
             if (!title || !video_url) {
                 msgEl.style.color = '#ef4444';
-                msgEl.innerText = "Nyamuneka uzuza umutwe na video URL.";
+                msgEl.innerText = "Nyamuneka uzuza umutwe na Video URL.";
                 return;
             }
 
-            const res = await fetch('/api/admin/add-course', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, video_url, description, keywords })
-            });
+            const saveBtn = document.getElementById('saveCourseBtn');
+            saveBtn.innerText = "Birabikwa...";
 
-            const data = await res.json();
-            if (data.success) {
-                msgEl.style.color = '#22c55e';
-                msgEl.innerText = data.message;
-                document.getElementById('adminTitle').value = '';
-                document.getElementById('adminVideoUrl').value = '';
-                document.getElementById('adminDesc').value = '';
-                document.getElementById('adminKeywords').value = '';
-            } else {
+            try {
+                const res = await fetch('/api/admin/add-course', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, video_url, description, keywords })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    msgEl.style.color = '#22c55e';
+                    msgEl.innerText = data.message;
+                    // Gusiba utubaho two kwandikamo
+                    document.getElementById('adminTitle').value = '';
+                    document.getElementById('adminVideoUrl').value = '';
+                    document.getElementById('adminDesc').value = '';
+                    document.getElementById('adminKeywords').value = '';
+                } else {
+                    msgEl.style.color = '#ef4444';
+                    msgEl.innerText = data.error || "Habaye ikosa ryo kubika.";
+                }
+            } catch (err) {
+                console.error(err);
                 msgEl.style.color = '#ef4444';
-                msgEl.innerText = "Habaye ikosa ryo kubika.";
+                msgEl.innerText = "Ntibyashobokaga kuvugana na server.";
+            } finally {
+                saveBtn.innerText = "Emeza Ubike Isomo";
             }
         }
     </script>
