@@ -13,7 +13,6 @@ const db = createClient({
 
 async function initDatabase() {
   try {
-    // Table y'amasomo ya video
     await db.execute(`
       CREATE TABLE IF NOT EXISTS courses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,32 +24,30 @@ async function initDatabase() {
       )
     `);
 
-    // Turemye amakuru y'ibanze niba nta na rimwe ririmo
     const check = await db.execute("SELECT COUNT(*) as count FROM courses");
     if (check.rows[0].count === 0) {
       await db.execute({
         sql: `INSERT INTO courses (title, video_url, description, keywords) VALUES (?, ?, ?, ?)`,
         args: [
           "Uburyo bwo Kuhira Inyanya mu Gihe cy'Izuba", 
-          "https://www.youtube.com/embed/sample-irrigation", 
+          "https://www.youtube.com/embed/dQw4w9WgXcQ", 
           "Menya uko wakoresha drip irrigation na mulching kugira ngo inyanya zitabora mu gihe cy'izuba.", 
           "irrigate,tomato,izuba,kuhira,inyanya,ubuhinzi"
         ]
       });
     }
-
-    console.log("Turso Database initialized for Admin & Courses.");
+    console.log("Database initialized successfully.");
   } catch (err) {
     console.error("DB Error:", err);
   }
 }
 initDatabase();
 
-// --- ADMIN API: Kongeramo isomo rya video nshya ---
+// Admin: Kongeramo isomo
 app.post('/api/admin/add-course', async (req, res) => {
   const { title, video_url, description, keywords } = req.body;
   if (!title || !video_url) {
-    return res.status(400).json({ error: "Mutwe wa video na Link birakenewe." });
+    return res.status(400).json({ success: false, error: "Mutwe na Video URL birakenewe." });
   }
 
   try {
@@ -58,14 +55,14 @@ app.post('/api/admin/add-course', async (req, res) => {
       sql: `INSERT INTO courses (title, video_url, description, keywords) VALUES (?, ?, ?, ?)`,
       args: [title, video_url, description || '', keywords || '']
     });
-    res.json({ success: true, message: "Isomo rya video ryongewemo neza!" });
+    res.json({ success: true, message: "Isomo ryongewemo neza!" });
   } catch (error) {
     console.error("Admin Error:", error);
-    res.status(500).json({ error: "Ntibyashobokaga kubika isomo." });
+    res.status(500).json({ success: false, error: "Ntibyashobokaga kubika." });
   }
 });
 
-// --- STUDENT/USER API: Gushakisha amasomo no gusubiza ibibazo byerekeye video ---
+// Student: Gushakisha isomo binyuze mu kibazo
 app.post('/api/student/ask', async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "Injiza ikibazo." });
@@ -93,7 +90,7 @@ app.post('/api/student/ask', async (req, res) => {
     }
 
     res.json({ 
-      answer: bestMatch ? `Hura n'isomo rijyanye n'ikibazo cyawe: "${bestMatch.title}". Reba video iri munsi y'iyi kugira ngo umenye ibisobanuro birambuye.` : "Nta somo riraboneka kuri iyi ngingo.",
+      answer: bestMatch ? `Dore isomo rijyanye n'ikibazo cyawe: "${bestMatch.title}". Reba amashusho ari munsi y'iyi kugira ngo wige birambuye.` : "Nta somo riraboneka kuri iyi ngingo.",
       course: bestMatch 
     });
   } catch (error) {
@@ -107,6 +104,6 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Menya Platform running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 module.exports = app;
