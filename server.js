@@ -7,38 +7,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize Turso Database
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL || '',
   authToken: process.env.TURSO_AUTH_TOKEN || '',
 });
 
-async function initDatabase() {
-  try {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS ai_chats (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_message TEXT,
-        ai_response TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log("Database initialized.");
-  } catch (err) {
-    console.error("DB Init Error:", err);
-  }
-}
-initDatabase();
-
-// AI Chat Endpoint with Automatic Backup Models
 app.post('/api/ai', async (req, res) => {
   const { message } = req.body;
   if (!message) {
@@ -47,48 +20,36 @@ app.post('/api/ai', async (req, res) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is missing in Vercel settings." });
+    return res.status(500).json({ error: "API Key irabuze muri Vercel." });
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  
-  // Jerageza gukoresha Pro niba Flash ihuze, cyangwa Flash niba Pro ihuze
-  const availableModels = ['gemini-2.5-pro', 'gemini-2.5-flash'];
-  let reply = null;
-  let lastError = null;
-
-  for (const modelName of availableModels) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: message,
-      });
-
-      if (response && response.text) {
-        reply = response.text;
-        break; // Yakunze! Hagarika gushakisha izindi.
-      }
-    } catch (err) {
-      console.warn(`Model ${modelName} failed, trying next... Error:`, err.message);
-      lastError = err.message;
-    }
-  }
-
-  if (!reply) {
-    return res.status(500).json({ error: `AI System busy: ${lastError}` });
-  }
-
-  // Save to Turso Database
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Hano niho tuyiha "Ubuhanga" cyangwa "Amahugurwa" (System Instruction)
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: message,
+      config: {
+        systemInstruction: `Uri umwarimu n'inzobere yigisha ubuhinzi bushya (new agriculture rules) ndetse n'amategeko y'umuhanda (driving laws). 
+        Ugomba gusubiza ibibazo by'abakugana ukoresheje ubumenyi bw'ubuhinzi bugezweho n'amategeko y'umuhanda mu buryo bworoheje kandibusobanutse mu rurimi umukoresha abajijemo.`
+      }
+    });
+
+    const reply = response.text || "Mbabajwe no kutabona igisubizo.";
+
+    // Kubika muri database
     await db.execute({
       sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
       args: [message, reply]
     });
-  } catch (dbErr) {
-    console.error("Turso DB Error:", dbErr);
-  }
 
-  res.json({ reply });
+    res.json({ reply });
+  } catch (error) {
+    console.error("AI Error:", error);
+    // Fallback niba gemini-2.5-flash ihuye n'umuzigo, ikoreshe gemini-2.5-pro
+    res.status(500).json({ error: `AI Error: ${error.message}` });
+  }
 });
 
 app.get('*', (req, res) => {
@@ -96,8 +57,6 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Menya server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Menya running on port ${PORT}`));
 
 module.exports = app;
