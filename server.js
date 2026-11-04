@@ -38,52 +38,68 @@ async function initDatabase() {
 }
 initDatabase();
 
-// API Endpoint yo kuvugana na Gemini AI
+// API Endpoint yo kuvugana na Gemini AI ikoresheje Fallback System
 app.post('/api/ai', async (req, res) => {
   const { message } = req.body;
   if (!message) {
     return res.status(400).json({ error: "Ubutumwa ntabwo burimo." });
   }
 
-  try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API Key ntabwo yashyizwe muri Environment Variables." });
-    }
-
-    // Twahinduye twishyiramo gemini-3.8-flash nk'uko ibisabwa bigaragaza
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: message }] }]
-      })
-    });
-
-    const data = await response.json();
-    
-    if (data.error) {
-      console.error("Gemini API Error:", data.error);
-      return res.status(500).json({ error: `AI Error: ${data.error.message}` });
-    }
-
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mbabajwe no kubabwira ko ntashoboye kubona igisubizo.";
-
-    // Kubika muri Turso Database
-    try {
-      await db.execute({
-        sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
-        args: [message, reply]
-      });
-    } catch (dbErr) {
-      console.error("Turso DB Insert Error:", dbErr);
-    }
-
-    res.json({ reply });
-  } catch (error) {
-    console.error("Server Error:", error);
-    res.status(500).json({ error: "Habaye ikibazo gikomeye muri Server." });
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "Gemini API Key ntabwo yashyizwe muri Environment Variables." });
   }
+
+  // Rutonde rwa models zikoreshwa niba imwe ifite overload/high demand
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-3.8-flash'
+  ];
+
+  let reply = null;
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: message }] }]
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        reply = data.candidates[0].content.parts[0].text;
+        break; // Niba yakunze, hagarika loops
+      } else if (data.error) {
+        lastError = data.error.message;
+        console.warn(`Model ${model} failed: ${data.error.message}. Trying next model...`);
+      }
+    } catch (err) {
+      lastError = err.message;
+      console.warn(`Fetch failed for ${model}: ${err.message}`);
+    }
+  }
+
+  if (!reply) {
+    return res.status(500).json({ error: `AI Error: Gemini servers are busy. (${lastError})` });
+  }
+
+  // Kubika muri Turso Database
+  try {
+    await db.execute({
+      sql: "INSERT INTO ai_chats (user_message, ai_response) VALUES (?, ?)",
+      args: [message, reply]
+    });
+  } catch (dbErr) {
+    console.error("Turso DB Insert Error:", dbErr);
+  }
+
+  res.json({ reply });
 });
 
 // Serve frontend routing
