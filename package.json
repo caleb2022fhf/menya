@@ -1,15 +1,13 @@
 {
   "name": "menya-app",
   "version": "1.0.0",
-  "description": "Menya Platform - Custom AI for Agriculture, Driving, and Cooking",
+  "description": "Menya Platform - Custom AI",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "@libsql/client": "^0.6.0",
-    "@nlpjs/basic": "^4.26.1",
-    "@nlpjs/lang-en-min": "^4.26.1",
     "express": "^4.19.2"
   }
 }
