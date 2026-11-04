@@ -26,13 +26,16 @@ app.post('/api/ai', async (req, res) => {
   try {
     const ai = new GoogleGenAI({ apiKey });
 
-    // Hano niho tuyiha "Ubuhanga" cyangwa "Amahugurwa" (System Instruction)
+    // Hano tuyihaye ubuhanga bwo kwigisha ubuhinzi, amategeko y'umuhanda, ndetse no guteka
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: message,
       config: {
-        systemInstruction: `Uri umwarimu n'inzobere yigisha ubuhinzi bushya (new agriculture rules) ndetse n'amategeko y'umuhanda (driving laws). 
-        Ugomba gusubiza ibibazo by'abakugana ukoresheje ubumenyi bw'ubuhinzi bugezweho n'amategeko y'umuhanda mu buryo bworoheje kandibusobanutse mu rurimi umukoresha abajijemo.`
+        systemInstruction: `Uri umwarimu n'inzobere yigisha ibintu bitatu by'ingenzi:
+        1. Ubuhinzi bushya na kijyambere (new agriculture rules and practices).
+        2. Amategeko y'umuhanda n'uburyo bwo gutwara ibinyabiziga neza (driving laws).
+        3. Ubumenyi bwo guteka (cooking recipes and culinary skills).
+        Subiza ibibazo by'abakugana ukoresheje izi ngingo zose mu rurimi rwa Kinyarwanda mu buryo bworoheje, bufatika kandi busobanutse neza.`
       }
     });
 
@@ -47,7 +50,6 @@ app.post('/api/ai', async (req, res) => {
     res.json({ reply });
   } catch (error) {
     console.error("AI Error:", error);
-    // Fallback niba gemini-2.5-flash ihuye n'umuzigo, ikoreshe gemini-2.5-pro
     res.status(500).json({ error: `AI Error: ${error.message}` });
   }
 });
