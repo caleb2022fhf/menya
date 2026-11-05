@@ -18,6 +18,9 @@
     function HomeApp() {
       const [activeTab, setActiveTab] = useState('courses');
       const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
+      
+      // Avatar State
+      const [userAvatar, setUserAvatar] = useState('');
 
       const [courses, setCourses] = useState([
         {
@@ -83,8 +86,15 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Gusoma aho umunyeshuri yari ageze muri LocalStorage
+      // Gusoma ifoto n'aho umunyeshuri yari ageze muri LocalStorage
       useEffect(() => {
+        const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
+        if (savedAvatar) {
+          setUserAvatar(savedAvatar);
+        } else {
+          setUserAvatar(`https://ui-avatars.com/api/?name=${currentUser}&background=0D9488&color=fff`);
+        }
+
         const saved = localStorage.getItem(`menya_progress_${currentUser}_${selectedCourse.id}`);
         if (saved) {
           const parsed = JSON.parse(saved);
@@ -95,6 +105,20 @@
           setMode('study');
         }
       }, [selectedCourse, currentUser]);
+
+      // Guhindura ifoto ya Profile kuri Home
+      const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const newImg = reader.result;
+            setUserAvatar(newImg);
+            localStorage.setItem(`menya_avatar_${currentUser}`, newImg);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
 
       // Timer Logic
       useEffect(() => {
@@ -199,12 +223,30 @@
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-xs text-neutral-400">Muraho, <strong className="text-emerald-400">{currentUser}</strong></span>
+              {/* Profile Picture & User Info */}
+              <div className="flex items-center gap-3 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-xl">
+                <div className="relative group w-8 h-8">
+                  <img
+                    src={userAvatar}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover border border-emerald-500/50"
+                  />
+                  <label className="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all text-[9px] text-emerald-400 font-bold">
+                    Edit
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                  </label>
+                </div>
+                <span className="text-xs text-neutral-300">
+                  <strong className="text-emerald-400">{currentUser}</strong>
+                </span>
+              </div>
+
               <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
                 <button onClick={() => setActiveTab('courses')} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'courses' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}`}>🎥 Isomo & Quiz</button>
                 <button onClick={() => setActiveTab('timetable')} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}`}>📅 Timetable</button>
               </div>
-              <button onClick={handleLogout} className="text-xs text-red-400 hover:underline px-2 py-1 bg-red-500/10 rounded border border-red-500/20">
+
+              <button onClick={handleLogout} className="text-xs text-red-400 hover:underline px-3 py-1.5 bg-red-500/10 rounded-xl border border-red-500/20">
                 Sohoka
               </button>
             </div>
