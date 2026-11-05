@@ -1,1 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menya AI Hub - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-black text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
+  <div id="home-root"></div>
 
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function HomeApp() {
+      const [activeTab, setActiveTab] = useState('courses');
+      const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
+
+      const [courses, setCourses] = useState([
+        {
+          id: 1,
+          title: "Amategeko y'Omuhanda (Traffic Code)",
+          category: "Driving Laws",
+          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          description: "Kwiga amategeko y'umuhanda, ibimenyetso byo mu nzira, n'umuvuduku mu mijyi.",
+          scheduleTime: "Monday & Wednesday, 09:00 AM",
+          quiz: [
+            { q: "Ni uwuhe muvuduku wemewe mu Mujyi wa Kigali?", options: ["40 km/h", "80 km/h", "100 km/h"], answer: 0 },
+            { q: "Ahanyurwa n'abanyamaguru hitwa ngo ki?", options: ["Zebra Crossing", "Highway", "Roundabout"], answer: 0 }
+          ]
+        },
+        {
+          id: 2,
+          title: "Off-Grid Solar PV Wiring & TVET Installation",
+          category: "TVET Technical",
+          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          description: "Uburyo bwo gushyira ibyuma bikurura imirasire y'izuba no kwitonda ku nsinga.",
+          scheduleTime: "Tuesday & Thursday, 02:00 PM",
+          quiz: [
+            { q: "Ni uwuhe mugozi ukoreshwa kuri 12V 1000W inverter?", options: ["4 AWG", "12 AWG", "20 AWG"], answer: 0 }
+          ]
+        }
+      ]);
+      const [selectedCourse, setSelectedCourse] = useState(courses[0]);
+
+      // Timer (25 min isomo & 10 min quiz)
+      const [timeLeft, setTimeLeft] = useState(25 * 60); 
+      const [isTimerRunning, setIsTimerRunning] = useState(false);
+      const [mode, setMode] = useState('study'); 
+      const [selectedAnswers, setSelectedAnswers] = useState({});
+
+      // Admin Modal States (Ctrl + Shift + C)
+      const [showAdminModal, setShowAdminModal] = useState(false);
+      const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+      const [passwordInput, setPasswordInput] = useState('');
+      const [authError, setAuthError] = useState(false);
+
+      // Admin inputs
+      const [newTitle, setNewTitle] = useState('');
+      const [newCategory, setNewCategory] = useState('Driving Laws');
+      const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
+      const [newSchedule, setNewSchedule] = useState('');
+      const [newDesc, setNewDesc] = useState('');
+
+      // AI Chat
+      const [chatInput, setChatInput] = useState('');
+      const [messages, setMessages] = useState([
+        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano.` }
+      ]);
+
+      // Gukoresha Ctrl + Shift + C kuri Admin Control Room
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            setShowAdminModal(true);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, []);
+
+      // Gusoma aho umunyeshuri yari ageze muri LocalStorage
+      useEffect(() => {
+        const saved = localStorage.getItem(`menya_progress_${currentUser}_${selectedCourse.id}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setTimeLeft(parsed.timeLeft || 25 * 60);
+          setMode(parsed.mode || 'study');
+        } else {
+          setTimeLeft(25 * 60);
+          setMode('study');
+        }
+      }, [selectedCourse, currentUser]);
+
+      // Timer Logic
+      useEffect(() => {
+        let timer;
+        if (isTimerRunning && timeLeft > 0) {
+          timer = setInterval(() => {
+            setTimeLeft(prev => {
+              const updated = prev - 1;
+              localStorage.setItem(`menya_progress_${currentUser}_${selectedCourse.id}`, JSON.stringify({ timeLeft: updated, mode }));
+              return updated;
+            });
+          }, 1000);
+        } else if (timeLeft === 0 && isTimerRunning) {
+          setIsTimerRunning(false);
+          if (mode === 'study') {
+            alert("Iminota 25 y'isomo irangiye! Tangira Quiz y'iminota 10.");
+            setMode('quiz');
+            setTimeLeft(10 * 60);
+            setIsTimerRunning(true);
+          } else {
+            alert("Iminota 10 ya Quiz irangiye!");
+          }
+        }
+        return () => clearInterval(timer);
+      }, [isTimerRunning, timeLeft, mode, selectedCourse.id, currentUser]);
+
+      const formatTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+
+      const handleAdminLogin = (e) => {
+        e.preventDefault();
+        if (passwordInput === 'Caleb@2026') {
+          setIsAdminLoggedIn(true);
+          setAuthError(false);
+          setPasswordInput('');
+        } else {
+          setAuthError(true);
+        }
+      };
+
+      const convertToEmbed = (url) => {
+        if (!url) return '';
+        if (url.includes('embed/')) return url;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+      };
+
+      const handleAddCourse = (e) => {
+        e.preventDefault();
+        const formattedUrl = convertToEmbed(newYoutubeUrl);
+        const newObj = {
+          id: courses.length + 1,
+          title: newTitle,
+          category: newCategory,
+          embedUrl: formattedUrl,
+          description: newDesc,
+          scheduleTime: newSchedule || "Self-Paced",
+          quiz: [{ q: "Ikibazo cy'icyitegererezo?", options: ["Yego", "Oya"], answer: 0 }]
+        };
+        setCourses([...courses, newObj]);
+        setSelectedCourse(newObj);
+        alert("Isomo ryongewe neza kuri Web!");
+        setShowAdminModal(false);
+        setNewTitle('');
+        setNewYoutubeUrl('');
+        setNewDesc('');
+        setNewSchedule('');
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('menya_current_user');
+        window.location.href = 'index.html';
+      };
+
+      const handleSendQuestion = (e) => {
+        e.preventDefault();
+        if (!chatInput.trim()) return;
+        const userText = chatInput;
+        setChatInput('');
+        setMessages(prev => [...prev, { role: 'user', text: userText }]);
+
+        setTimeout(() => {
+          setMessages(prev => [...prev, { role: 'assistant', text: "Menya AI irasubiza kuri: " + userText }]);
+        }, 600);
+      };
+
+      return (
+        <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+          {/* Header */}
+          <header className="border-b border-neutral-800 bg-neutral-950 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
+                M
+              </div>
+              <h1 className="text-base font-bold tracking-tight text-white">
+                MENYA <span className="text-emerald-400 text-xs font-mono">AI HUB (RWANDA)</span>
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-neutral-400">Muraho, <strong className="text-emerald-400">{currentUser}</strong></span>
+              <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
+                <button onClick={() => setActiveTab('courses')} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'courses' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}`}>🎥 Isomo & Quiz</button>
+                <button onClick={() => setActiveTab('timetable')} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}`}>📅 Timetable</button>
+              </div>
+              <button onClick={handleLogout} className="text-xs text-red-400 hover:underline px-2 py-1 bg-red-500/10 rounded border border-red-500/20">
+                Sohoka
+              </button>
+            </div>
+          </header>
+
+          {/* Main Body */}
+          <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-6">
+              {activeTab === 'courses' ? (
+                <>
+                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
+                    <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+                      <div>
+                        <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (25 min)' : '✍️ Quiz (10 min)'}</span>
+                        <div className="text-xl font-bold font-mono text-white">{formatTime(timeLeft)}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`px-4 py-2 rounded-lg text-xs font-bold ${isTimerRunning ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}`}>
+                          {isTimerRunning ? 'Pause' : 'Tangira'}
+                        </button>
+                        <button onClick={() => { setMode(mode === 'study' ? 'quiz' : 'study'); setTimeLeft(mode === 'study' ? 10 * 60 : 25 * 60); }} className="px-3 py-2 bg-neutral-800 rounded-lg text-xs">
+                          Hindura Intambwe
+                        </button>
+                      </div>
+                    </div>
+
+                    {mode === 'study' ? (
+                      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-neutral-800">
+                        <iframe src={selectedCourse.embedUrl} className="w-full h-full border-0" allowFullScreen></iframe>
+                      </div>
+                    ) : (
+                      <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
+                        <h3 className="text-sm font-bold text-emerald-400">Quiz (10 Min)</h3>
+                        {selectedCourse.quiz && selectedCourse.quiz.map((qObj, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
+                            <div className="grid grid-cols-1 gap-2">
+                              {qObj.options.map((opt, oIdx) => (
+                                <button key={oIdx} onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} className={`p-2.5 rounded-lg text-xs text-left border ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-300'}`}>
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div>
+                      <h2 className="text-base font-bold text-white">{selectedCourse.title}</h2>
+                      <p className="text-xs text-neutral-400 mt-1">{selectedCourse.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold uppercase text-neutral-400">Hitamo Isomo</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {courses.map((c) => (
+                        <div key={c.id} onClick={() => setSelectedCourse(c)} className={`p-4 rounded-xl border cursor-pointer ${selectedCourse.id === c.id ? 'bg-neutral-900 border-emerald-500' : 'bg-neutral-950 border-neutral-800'}`}>
+                          <span className="text-[10px] text-emerald-400 font-mono">{c.category}</span>
+                          <h4 className="text-sm font-bold text-white mt-1">{c.title}</h4>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+                  <h2 className="text-lg font-bold text-white">Gahunda y'Amasomo (Timetable)</h2>
+                  <div className="space-y-2">
+                    {courses.map(c => (
+                      <div key={c.id} className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex justify-between items-center text-xs">
+                        <span>{c.title}</span>
+                        <span className="text-emerald-400 font-mono">📅 {c.scheduleTime}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* AI Chat Sidebar */}
+            <div className="lg:col-span-4 flex flex-col h-[700px] bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-xl">
+              <div className="p-4 border-b border-neutral-800 bg-neutral-950 text-xs font-bold text-emerald-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Menya Assistant (AI)
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {messages.map((m, i) => (
+                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs ${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 bg-neutral-950 flex gap-2">
+                <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Baza ikibazo cyawe..." className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold">Ohereza</button>
+              </form>
+            </div>
+          </main>
+
+          {/* Admin Control Room Modal (Ctrl + Shift + C & Password Caleb@2026) */}
+          {showAdminModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 relative shadow-2xl">
+                <button onClick={() => setShowAdminModal(false)} className="absolute top-4 right-4 text-neutral-400 hover:text-white">✕</button>
+                {!isAdminLoggedIn ? (
+                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <h3 className="text-base font-bold text-white">Admin Control Room Login</h3>
+                    <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="Injiza password (Caleb@2026)..." className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500" autoFocus />
+                    {authError && <p className="text-xs text-red-500">Password si yo!</p>}
+                    <button type="submit" className="w-full bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold">Emeza</button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleAddCourse} className="space-y-3">
+                    <h3 className="text-base font-bold text-emerald-400">Control Room: Ongeraho Isomo rya YouTube</h3>
+                    <input type="text" placeholder="Umutwe w'isomo" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white" required />
+                    <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white">
+                      <option value="Driving Laws">Driving Laws</option>
+                      <option value="TVET Technical">TVET Technical</option>
+                      <option value="Agriculture">Agriculture</option>
+                    </select>
+                    <input type="text" placeholder="YouTube Link (URL)" value={newYoutubeUrl} onChange={(e) => setNewYoutubeUrl(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white" required />
+                    <input type="text" placeholder="Timetable (e.g. Friday 10 AM)" value={newSchedule} onChange={(e) => setNewSchedule(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white" />
+                    <textarea placeholder="Ubusobanuro bw'isomo" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white h-16" />
+                    <button type="submit" className="w-full bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold">Emeza no Kohereza</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('home-root')).render(<HomeApp />);
+  </script>
+</body>
+</html>
