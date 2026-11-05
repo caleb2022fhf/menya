@@ -82,10 +82,10 @@
         { role: 'assistant', text: "Muraho! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano." }
       ]);
 
-      // Gukoresha shortcut Ctrl + Shift + T kuri Admin
+      // Gukoresha shortcut Ctrl + Shift + C kuri Admin (Umurongo wa 62-72)
       useEffect(() => {
         const handleKeyDown = (e) => {
-          if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+          if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
             e.preventDefault();
             setShowAdminModal(true);
           }
@@ -392,7 +392,7 @@
 
           </main>
 
-          {/* Admin Dashboard Modal (Ctrl + Shift + T & Password Caleb@2026) */}
+          {/* Admin Dashboard Modal (Ctrl + Shift + C & Password Caleb@2026) */}
           {showAdminModal && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-6 relative shadow-2xl">
