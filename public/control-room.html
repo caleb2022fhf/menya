@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menya AI Hub - Control Room (Admin)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-neutral-950 text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
+  <div id="control-room-root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function ControlRoomApp() {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [pinInput, setPinInput] = useState('');
+      const [authError, setAuthError] = useState(false);
+
+      // Admin Data States
+      const [activeTab, setActiveTab] = useState('users'); // 'users' cyangwa 'timetable'
+      const [usersList, setUsersList] = useState([]);
+      const [timetableList, setTimetableList] = useState([
+        { id: 1, course: "Amategeko y'Omuhanda", day: "Ku Mwibe (Monday)", time: "09:00 AM" },
+        { id: 2, course: "Off-Grid Solar PV Wiring", day: "Ku Kabiri (Tuesday)", time: "02:00 PM" }
+      ]);
+
+      // Form yo kongera Timetable nshya
+      const [newCourseName, setNewCourseName] = useState('');
+      const [newDay, setNewDay] = useState('Monday');
+      const [newTimeSlot, setNewTimeSlot] = useState('');
+
+      // Gukurura abanyeshuri banditse muri localStorage
+      useEffect(() => {
+        // Hano dufata abakoresha bose banditse muri system
+        const dummyUsers = [
+          { username: "aimecaleb05@gmail.com", category: "Driving Laws", id: "ADMIN-01", role: "Super Admin" },
+          { username: "Umunyeshuri_1", category: "TVET Technical", id: "TVET-2026-02", role: "Student" }
+        ];
+        
+        // Niba hari abandi babitswe muri localStorage twabahuza
+        setUsersList(dummyUsers);
+      }, []);
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (pinInput === 'Caleb@2026') {
+          setIsAuthenticated(true);
+          setAuthError(false);
+        } else {
+          setAuthError(true);
+        }
+      };
+
+      const handleAddTimetable = (e) => {
+        e.preventDefault();
+        if (!newCourseName || !newTimeSlot) return;
+        const newItem = {
+          id: timetableList.length + 1,
+          course: newCourseName,
+          day: newDay,
+          time: newTimeSlot
+        };
+        setTimetableList([...timetableList, newItem]);
+        setNewCourseName('');
+        setNewTimeSlot('');
+        alert("Gahunda y'isomo (Timetable) yongewe neza!");
+      };
+
+      const handleDeleteUser = (username) => {
+        if (confirm(`Uremeye gusiba umukoresha ${username}?`)) {
+          setUsersList(usersList.filter(u => u.username !== username));
+        }
+      };
+
+      // 1. Niba atarashyiramo PIN ya Caleb@2026
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold mx-auto text-lg">
+                  🔒
+                </div>
+                <h1 className="text-xl font-bold text-white">MENYA CONTROL ROOM</h1>
+                <p className="text-xs text-neutral-400">Injiza PIN y'ubuyobozi (Admin Security PIN)</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <input
+                    type="password"
+                    required
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="Injiza PIN (Caleb@2026)..."
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white text-center focus:outline-none focus:border-emerald-500"
+                    autoFocus
+                  />
+                  {authError && <p className="text-xs text-red-500 mt-2 text-center">PIN si yo! Ongera ugerageze.</p>}
+                </div>
+
+                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
+                  Fungura Control Room
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      // 2. Control Room Dashboard nyirizina (Nyuma yo kwinjira neza)
+      return (
+        <div className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col">
+          {/* Header */}
+          <header className="border-b border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold">
+                ⚡
+              </div>
+              <h1 className="text-base font-bold tracking-tight text-white">
+                CONTROL ROOM <span className="text-red-400 text-xs font-mono">(ADMIN PANEL)</span>
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'users' ? 'bg-neutral-800 text-white border border-neutral-700' : 'text-neutral-400'}`}
+              >
+                👥 Abakoresha (Users)
+              </button>
+              <button
+                onClick={() => setActiveTab('timetable')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-neutral-800 text-white border border-neutral-700' : 'text-neutral-400'}`}
+              >
+                📅 Timetable Management
+              </button>
+              <button
+                onClick={() => window.location.href = 'home.html'}
+                className="text-xs text-neutral-400 hover:text-white px-3 py-1.5 bg-neutral-800 rounded-lg"
+              >
+                Subira kuri Home
+              </button>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 max-w-[1400px] w-full mx-auto p-6 space-y-6">
+            {activeTab === 'users' ? (
+              <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Abanyeshuri n'Abakoresha Banditse</h2>
+                    <p className="text-xs text-neutral-400">Genzura uburenganzira bw'abantu bose bari muri system.</p>
+                  </div>
+                  <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/20 font-mono">
+                    Total Users: {usersList.length}
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-neutral-300">
+                    <thead className="bg-neutral-950 text-neutral-400 uppercase font-mono border-b border-neutral-800">
+                      <tr>
+                        <th className="p-3">Umunyeshuri / Email</th>
+                        <th className="p-3">Ishami (Category)</th>
+                        <th className="p-3">Student ID</th>
+                        <th className="p-3">Uruhare (Role)</th>
+                        <th className="p-3 text-right">Ububasha (Actions)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-800">
+                      {usersList.map((u, idx) => (
+                        <tr key={idx} className="hover:bg-neutral-950/50">
+                          <td className="p-3 font-bold text-white">{u.username}</td>
+                          <td className="p-3 text-emerald-400">{u.category}</td>
+                          <td className="p-3 font-mono">{u.id}</td>
+                          <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{u.role}</span></td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => handleDeleteUser(u.username)}
+                              className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20"
+                            >
+                              Siba / Hagarika
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Form yo kongera Timetable */}
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-1">
+                  <h2 className="text-base font-bold text-white">Gushyiraho Timetable Nshya</h2>
+                  <form onSubmit={handleAddTimetable} className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Izina ry'Isomo</label>
+                      <input
+                        type="text"
+                        required
+                        value={newCourseName}
+                        onChange={(e) => setNewCourseName(e.target.value)}
+                        placeholder="Urugero: Traffic Code..."
+                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Umunsi w'icyumweru</label>
+                      <select
+                        value={newDay}
+                        onChange={(e) => setNewDay(e.target.value)}
+                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
+                      >
+                        <option value="Monday">Ku Mwibe (Monday)</option>
+                        <option value="Tuesday">Ku Kabiri (Tuesday)</option>
+                        <option value="Wednesday">Ku Gatatu (Wednesday)</option>
+                        <option value="Thursday">Ku Kane (Thursday)</option>
+                        <option value="Friday">Ku Gatanu (Friday)</option>
+                        <option value="Weekend">Weekend</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Isaha (Time Slot)</label>
+                      <input
+                        type="text"
+                        required
+                        value={newTimeSlot}
+                        onChange={(e) => setNewTimeSlot(e.target.value)}
+                        placeholder="Urugero: 09:00 AM - 10:00 AM"
+                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
+                      />
+                    </div>
+
+                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold">
+                      Emeza no Kohereza kuri Timetable
+                    </button>
+                  </form>
+                </div>
+
+                {/* Urutonde rwa Timetable ziriho */}
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-2">
+                  <h2 className="text-base font-bold text-white">Gahunda z'Amasomo Zashyizweho (Timetable Schedule)</h2>
+                  <div className="space-y-3">
+                    {timetableList.map((item) => (
+                      <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{item.day}</span>
+                          <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
+                        </div>
+                        <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
+                          🕒 {item.time}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('control-room-root')).render(<ControlRoomApp />);
+  </script>
+</body>
+</html>
