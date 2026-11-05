@@ -59,7 +59,7 @@
       const initialCourse = courses.find(c => c.category === studentCategory) || courses[0];
       const [selectedCourse] = useState(initialCourse);
 
-      // Timer (25 min isomo -> 10 min quiz -> Auto Logout)
+      // Timer & Mode (25 min study -> 10 min quiz -> Auto Logout)
       const [timeLeft, setTimeLeft] = useState(25 * 60); 
       const [mode, setMode] = useState('study'); 
       const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -73,7 +73,7 @@
       const [chatInput, setChatInput] = useState('');
       const [isAiThinking, setIsAiThinking] = useState(false);
       const [messages, setMessages] = useState([
-        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano.` }
+        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe cyangwa amategeko y'u Rwanda hano.` }
       ]);
 
       // Gukoresha Ctrl + Shift + C kugira ngo ifungure Admin PIN Modal
@@ -135,7 +135,7 @@
         return `${m}:${s < 10 ? '0' : ''}${s}`;
       };
 
-      // Kwemeza PIN ya Admin no kuyimurira kuri Control Room
+      // Kwemeza PIN ya Admin no kuyimurira kuri control-room.html
       const handleAdminLogin = (e) => {
         e.preventDefault();
         if (passwordInput === 'Caleb@2026') {
@@ -310,7 +310,7 @@
       );
     }
 
-    ReactDOM.createRoot(getElementById('home-root') || document.getElementById('home-root')).render(<HomeApp />);
+    ReactDOM.createRoot(document.getElementById('home-root')).render(<HomeApp />);
   </script>
 </body>
 </html>
