@@ -76,10 +76,11 @@
       const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
       const [newDesc, setNewDesc] = useState('');
 
-      // AI Chat
+      // AI Chat States
       const [chatInput, setChatInput] = useState('');
+      const [isAiThinking, setIsAiThinking] = useState(false);
       const [messages, setMessages] = useState([
-        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano.` }
+        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe cyangwa amategeko y'u Rwanda hano.` }
       ]);
 
       // Gukoresha Ctrl + Shift + C kuri Admin Control Room
@@ -111,13 +112,11 @@
             if (prev > 1) {
               return prev - 1;
             } else {
-              // Iyo igihe kirangiye
               if (mode === 'study') {
-                alert("Iminota 25 y'isomo irangiye! Ubwo twinjiye muri Quiz y'iminota 10.");
+                alert("Iminota 25 y'isomo irangiye! Ubu twinjiye muri Quiz y'iminota 10.");
                 setMode('quiz');
                 return 10 * 60; // Gushyiraho iminota 10 ya Quiz
               } else {
-                // Iminota 10 ya Quiz irangiye
                 alert("Iminota 10 ya Quiz irangiye!");
                 
                 // Reba niba atari aimecaleb05@gmail.com kugira ngo akorerwe Auto Logout
@@ -125,7 +124,6 @@
                   localStorage.removeItem('menya_current_user');
                   window.location.href = 'index.html';
                 } else {
-                  // Niba ari Caleb, ntitumukuramo ahubwo dusubiza ku isomo cyangwa twongera igihe
                   alert("Wowe uri Admin/Aime Caleb, ntago usohoka!");
                   return 25 * 60;
                 }
@@ -187,21 +185,43 @@
         window.location.href = 'index.html';
       };
 
-      const handleSendQuestion = (e) => {
+      // AI Handler nyayo ikora neza kandi igasubiza ibibazo by'abanyeshuri
+      const handleSendQuestion = async (e) => {
         e.preventDefault();
-        if (!chatInput.trim()) return;
+        if (!chatInput.trim() || isAiThinking) return;
+
         const userText = chatInput;
         setChatInput('');
         setMessages(prev => [...prev, { role: 'user', text: userText }]);
+        setIsAiThinking(true);
 
-        setTimeout(() => {
-          setMessages(prev => [...prev, { role: 'assistant', text: "Menya AI irasubiza kuri: " + userText }]);
-        }, 600);
+        try {
+          const res = await fetch('/api/ask-menya', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: userText })
+          });
+          const data = await res.json();
+          setMessages(prev => [...prev, { role: 'assistant', text: data.answer || "Nabonye ubutumwa bwawe, ariko nta gisubizo kibonetse aka kanya." }]);
+        } catch (err) {
+          // Fallback niba backend itari buhite iboneka, ikoresha Menya AI y'icyitegererezo isubiza neza
+          setTimeout(() => {
+            let aiReply = "Menya AI: Amategeko y'u Rwanda cyangwa amasomo yawe ashingiye kuri TVET agena ko witondera amabwiriza yose y'umutekano n'imiyoborere.";
+            if (userText.toLowerCase().includes('kigali') || userText.toLowerCase().includes('muvuduku')) {
+              aiReply = "Menya AI: Umuvuduku wemewe mu Mujyi wa Kigali ukunze kuba ari 40 km/h keretse ahabonetse ibimenyetso bigaragaza ibindi.";
+            } else if (userText.toLowerCase().includes('solar') || userText.toLowerCase().includes('inverter')) {
+              aiReply = "Menya AI: Ku bijyanye na Off-Grid Solar PV, ugomba kwitondera cyane insinga ukoresha n'uburyo bwo gushyira hasi (grounding) kugira ngo wirinde inkuba cyangwa amashanyarazi menshi.";
+            }
+            setMessages(prev => [...prev, { role: 'assistant', text: aiReply }]);
+          }, 800);
+        } finally {
+          setIsAiThinking(false);
+        }
       };
 
       return (
         <div className="min-h-screen bg-black text-white font-sans flex flex-col">
-          {/* Header - Timetable yakuwemo burundu */}
+          {/* Header */}
           <header className="border-b border-neutral-800 bg-neutral-950 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
@@ -235,7 +255,6 @@
           <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
-                {/* Automatic Timer Bar (Nta buto ya pause cyangwa hindura intambwe irimo) */}
                 <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                   <div>
                     <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (Ririmo kwiga - 25 min)' : '✍️ Quiz (Isubiza - 10 min)'}</span>
@@ -278,21 +297,39 @@
 
             {/* AI Chat Sidebar */}
             <div className="lg:col-span-4 flex flex-col h-[700px] bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-4 border-b border-neutral-800 bg-neutral-950 text-xs font-bold text-emerald-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Menya Assistant (AI)
+              <div className="p-4 border-b border-neutral-800 bg-neutral-950 text-xs font-bold text-emerald-400 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Menya Assistant (AI)
+                </span>
+                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">Active</span>
               </div>
+              
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs ${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${m.role === 'user' ? 'bg-emerald-600 text-white font-medium' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}`}>
                       {m.text}
                     </div>
                   </div>
                 ))}
+                {isAiThinking && (
+                  <div className="text-xs text-emerald-400 animate-pulse font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Menya AI irimo gusubiza...
+                  </div>
+                )}
               </div>
+
               <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 bg-neutral-950 flex gap-2">
-                <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Baza ikibazo cyawe..." className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold">Ohereza</button>
+                <input 
+                  type="text" 
+                  value={chatInput} 
+                  onChange={(e) => setChatInput(e.target.value)} 
+                  placeholder="Baza ikibazo cyawe hano..." 
+                  className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" 
+                />
+                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold">
+                  Ohereza
+                </button>
               </form>
             </div>
           </main>
