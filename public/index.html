@@ -3,297 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menya AI Hub - Rwanda</title>
-  <!-- Tailwind CSS -->
+  <title>Menya AI Hub - Login / Sign Up</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React & ReactDOM CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel Compiler for JSX -->
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-black text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
-  <div id="root"></div>
+<body class="bg-black text-gray-100 font-sans flex items-center justify-center min-h-screen">
+  <div id="index-root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState } = React;
 
-    function MenyaApp() {
-      // Menya niba umunyeshuri yarinjiye cyangwa agomba gukora Login/Signup
-      const [isLoggedIn, setIsLoggedIn] = useState(false);
+    function IndexAuthApp() {
       const [isSignup, setIsSignup] = useState(false);
-      const [usernameInput, setUsernameInput] = useState('');
-      const [passwordInputAuth, setPasswordInputAuth] = useState('');
-      const [currentUser, setCurrentUser] = useState('');
+      const [username, setUsername] = useState('');
+      const [password, setPassword] = useState('');
 
-      // Dashboard States
-      const [activeTab, setActiveTab] = useState('courses');
-      const [courses, setCourses] = useState([
-        {
-          id: 1,
-          title: "Amategeko y'Omuhanda (Traffic Code)",
-          category: "Driving Laws",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Kwiga amategeko y'umuhanda, ibimenyetso byo mu nzira, n'umuvuduku mu mijyi.",
-          scheduleTime: "Monday & Wednesday, 09:00 AM",
-          quiz: [
-            { q: "Ni uwuhe muvuduku wemewe mu Mujyi wa Kigali?", options: ["40 km/h", "80 km/h", "100 km/h"], answer: 0 },
-            { q: "Ahanyurwa n'abanyamaguru hitwa ngo ki?", options: ["Zebra Crossing", "Highway", "Roundabout"], answer: 0 }
-          ]
-        },
-        {
-          id: 2,
-          title: "Off-Grid Solar PV Wiring & TVET Installation",
-          category: "TVET Technical",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Uburyo bwo gushyira ibyuma bikurura imirasire y'izuba no kwitonda ku nsinga.",
-          scheduleTime: "Tuesday & Thursday, 02:00 PM",
-          quiz: [
-            { q: "Ni uwuhe mugozi ukoreshwa kuri 12V 1000W inverter?", options: ["4 AWG", "12 AWG", "20 AWG"], answer: 0 }
-          ]
-        }
-      ]);
-      const [selectedCourse, setSelectedCourse] = useState(courses[0]);
-
-      // Timer & Quiz states (25 min isomo & 10 min quiz)
-      const [timeLeft, setTimeLeft] = useState(25 * 60); 
-      const [isTimerRunning, setIsTimerRunning] = useState(false);
-      const [mode, setMode] = useState('study'); 
-      const [selectedAnswers, setSelectedAnswers] = useState({});
-
-      // Admin Modal & Umutekano (Ctrl + Shift + C)
-      const [showAdminModal, setShowAdminModal] = useState(false);
-      const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-      const [passwordInput, setPasswordInput] = useState('');
-      const [authError, setAuthError] = useState(false);
-
-      // Admin Form inputs
-      const [newTitle, setNewTitle] = useState('');
-      const [newCategory, setNewCategory] = useState('Driving Laws');
-      const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
-      const [newSchedule, setNewSchedule] = useState('');
-      const [newDesc, setNewDesc] = useState('');
-
-      // AI Chat
-      const [chatInput, setChatInput] = useState('');
-      const [isAiThinking, setIsAiThinking] = useState(false);
-      const [messages, setMessages] = useState([
-        { role: 'assistant', text: "Muraho! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano." }
-      ]);
-
-      // Reba niba hari umunyeshuri wari wasize winjiye mbere
-      useEffect(() => {
-        const savedUser = localStorage.getItem('menya_current_user');
-        if (savedUser) {
-          setCurrentUser(savedUser);
-          setIsLoggedIn(true);
-        }
-      }, []);
-
-      // Gukoresha shortcut Ctrl + Shift + C kuri Admin
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
-            e.preventDefault();
-            setShowAdminModal(true);
-          }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-      }, []);
-
-      // Kugarura aho umunyeshuri yari ageze
-      useEffect(() => {
-        if (currentUser) {
-          const saved = localStorage.getItem(`menya_progress_${currentUser}_${selectedCourse.id}`);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setTimeLeft(parsed.timeLeft || 25 * 60);
-            setMode(parsed.mode || 'study');
-          } else {
-            setTimeLeft(25 * 60);
-            setMode('study');
-          }
-        }
-      }, [selectedCourse, currentUser]);
-
-      // Timer Logic
-      useEffect(() => {
-        let timer;
-        if (isTimerRunning && timeLeft > 0 && isLoggedIn) {
-          timer = setInterval(() => {
-            setTimeLeft(prev => {
-              const updated = prev - 1;
-              localStorage.setItem(`menya_progress_${currentUser}_${selectedCourse.id}`, JSON.stringify({ timeLeft: updated, mode }));
-              return updated;
-            });
-          }, 1000);
-        } else if (timeLeft === 0 && isTimerRunning) {
-          setIsTimerRunning(false);
-          if (mode === 'study') {
-            alert("Iminota 25 y'isomo irangiye! Ubu ushobora gukora Quiz y'iminota 10.");
-            setMode('quiz');
-            setTimeLeft(10 * 60);
-            setIsTimerRunning(true);
-          } else {
-            alert("Iminota 10 ya Quiz irangiye!");
-          }
-        }
-        return () => clearInterval(timer);
-      }, [isTimerRunning, timeLeft, mode, selectedCourse.id, isLoggedIn, currentUser]);
-
-      const formatTime = (secs) => {
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
-      };
-
-      // Handler yo gukora Login cyangwa Signup
-      const handleAuthSubmit = (e) => {
+      const handleSubmit = (e) => {
         e.preventDefault();
-        if (!usernameInput.trim()) return;
-        setCurrentUser(usernameInput);
-        localStorage.setItem('menya_current_user', usernameInput);
-        setIsLoggedIn(true);
+        if (!username.trim()) return;
+
+        // Kubika izina ry'umunyeshuri muri browser
+        localStorage.setItem('menya_current_user', username);
+        alert(isSignup ? "Konti yafunguwe neza! Urinjira kuri Dashboard..." : "Mwinjiye neza! Murerekanwa kuri Dashboard...");
+
+        // Guhita yimurirwa kuri dashboard page
+        window.location.href = 'dashboard.html';
       };
 
-      const handleLogout = () => {
-        localStorage.removeItem('menya_current_user');
-        setIsLoggedIn(false);
-        setCurrentUser('');
-      };
-
-      const handleAdminLogin = (e) => {
-        e.preventDefault();
-        if (passwordInput === 'Caleb@2026') {
-          setIsAdminLoggedIn(true);
-          setAuthError(false);
-          setPasswordInput('');
-        } else {
-          setAuthError(true);
-        }
-      };
-
-      const convertToEmbed = (url) => {
-        if (!url) return '';
-        if (url.includes('embed/')) return url;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
-      };
-
-      const handleAddCourse = (e) => {
-        e.preventDefault();
-        const formattedUrl = convertToEmbed(newYoutubeUrl);
-        const newCourseObj = {
-          id: courses.length + 1,
-          title: newTitle,
-          category: newCategory,
-          embedUrl: formattedUrl,
-          description: newDesc,
-          scheduleTime: newSchedule || "Self-Paced",
-          quiz: [{ q: "Ikibazo cy'icyitegererezo?", options: ["Yego", "Oya"], answer: 0 }]
-        };
-        setCourses([...courses, newCourseObj]);
-        setSelectedCourse(newCourseObj);
-        alert("Isomo n'isaha byongewe neza kuri Web!");
-        setNewTitle('');
-        setNewYoutubeUrl('');
-        setNewDesc('');
-        setNewSchedule('');
-        setShowAdminModal(false);
-      };
-
-      const handleSendQuestion = async (e) => {
-        e.preventDefault();
-        if (!chatInput.trim() || isAiThinking) return;
-
-        const userText = chatInput;
-        setChatInput('');
-        setMessages(prev => [...prev, { role: 'user', text: userText }]);
-        setIsAiThinking(true);
-
-        try {
-          const res = await fetch('/api/ask-menya', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: userText })
-          });
-          const data = await res.json();
-          setMessages(prev => [...prev, { role: 'assistant', text: data.answer }]);
-        } catch (err) {
-          setMessages(prev => [...prev, { role: 'assistant', text: "Habaye ikibazo mu guhuza na Menya AI." }]);
-        } finally {
-          setIsAiThinking(false);
-        }
-      };
-
-      // 1. Niba umunyeshuri atarinjira (Aracyari kuri Login / Signup page)
-      if (!isLoggedIn) {
-        return (
-          <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
-              <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold mx-auto text-lg">
-                  M
-                </div>
-                <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
-                <p className="text-xs text-neutral-400">
-                  {isSignup ? 'Fungura konti nshya yo kwiga' : 'Injira muri konte yawe kugira ngo ukomeze wige'}
-                </p>
-              </div>
-
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs text-neutral-400 mb-1">Izina cyangwa Imeyili (Username)</label>
-                  <input
-                    type="text"
-                    required
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    placeholder="Andika izina ryawe..."
-                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-neutral-400 mb-1">Ijambo ry'Ibanga (Password)</label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordInputAuth}
-                    onChange={(e) => setPasswordInputAuth(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
-                  {isSignup ? 'Emeza konti (Sign Up)' : 'Injira (Login)'}
-                </button>
-              </form>
-
-              <div className="text-center text-xs text-neutral-400">
-                {isSignup ? (
-                  <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
-                ) : (
-                  <p>Uri mushya hano? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      // 2. Niba yamaze kwinjira (Dashboard nyirizina)
       return (
-        <div className="min-h-screen bg-black text-white font-sans flex flex-col">
-          {/* Header Bar */}
-          <header className="border-b border-neutral-800 bg-neutral-950 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
-                M
-              </div>
-              <h1 className="text-base font-bold tracking-tight text-white">
+        <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold mx-auto text-lg">
+              M
+            </div>
+            <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
+            <p className="text-xs text-neutral-400">
+              {isSignup ? 'Fungura konti nshya yo kwiga' : 'Injira muri konte yawe kugira ngo ukomeze wige'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1">Izina cyangwa Imeyili (Username)</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Andika izina ryawe..."
+                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1">Ijambo ry'Ibanga (Password)</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
+              {isSignup ? 'Emeza konti (Sign Up)' : 'Injira (Login)'}
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-neutral-400">
+            {isSignup ? (
+              <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
+            ) : (
+              <p>Uri mushya hano? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('index-root')).render(<IndexAuthApp />);
+  </script>
+</body>
+</html>
