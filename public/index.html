@@ -9,7 +9,7 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-black text-gray-100 font-sans flex items-center justify-center min-h-screen">
+<body class="bg-black text-gray-100 font-sans flex items-center justify-center min-h-screen p-4">
   <div id="index-root"></div>
 
   <script type="text/babel">
@@ -19,9 +19,10 @@
       const [isSignup, setIsSignup] = useState(false);
       const [username, setUsername] = useState('');
       const [password, setPassword] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('Driving Laws'); // Isomo ry'ibanze ahitamo
+      const [studentId, setStudentId] = useState(''); // Nimero y'umunyeshuri
       const [profilePic, setProfilePic] = useState('');
 
-      // Gusoma ifoto y'umunyeshuri igihe ari kwiyandikisha
       const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -37,8 +38,11 @@
         e.preventDefault();
         if (!username.trim()) return;
 
-        // Kubika izina na Avatar muri localStorage
+        // Kubika amakuru y'umunyeshuri muri localStorage
         localStorage.setItem('menya_current_user', username);
+        localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
+        localStorage.setItem(`menya_student_id_${username}`, studentId || 'TVET-2026');
+        
         if (profilePic) {
           localStorage.setItem(`menya_avatar_${username}`, profilePic);
         }
@@ -55,13 +59,13 @@
             </div>
             <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
             <p className="text-xs text-neutral-400">
-              {isSignup ? 'Fungura konti nshya yo kwiga' : 'Injira muri konte yawe kugira ngo ukomeze wige'}
+              {isSignup ? 'Fungura konti nshya y\'umunyeshuri' : 'Injira muri konte yawe yo kwiga'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs text-neutral-400 mb-1">Izina cyangwa Imeyili (Username)</label>
+              <label className="block text-xs text-neutral-400 mb-1">Izina ry'Umunyeshuri (Username)</label>
               <input
                 type="text"
                 required
@@ -84,20 +88,47 @@
               />
             </div>
 
+            {/* Amakuru yiyongeraho igihe umunyeshuri ari kwiyandikisha (Sign Up) */}
             {isSignup && (
-              <div>
-                <label className="block text-xs text-neutral-400 mb-1">Ifoto y'Umwirondoro (Profile Picture)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full bg-black border border-neutral-800 p-2 rounded-xl text-xs text-neutral-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Hitamo Isomo ry'Ibanze (Primary Course/Category)</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="Driving Laws">Amategeko y'Omuhanda (Driving Laws)</option>
+                    <option value="TVET Technical">TVET Solar & Technical</option>
+                    <option value="Agriculture">Ubuhinzi n'Ubworozi (Agriculture)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Nimero y'Umunyeshuri cyangwa ID (Student ID)</label>
+                  <input
+                    type="text"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    placeholder="urugero: TVET/2026/001"
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Ifoto y'Umwirondoro (Profile Picture)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full bg-black border border-neutral-800 p-2 rounded-xl text-xs text-neutral-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500"
+                  />
+                </div>
+              </>
             )}
 
             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
-              {isSignup ? 'Emeza konti (Sign Up)' : 'Injira (Login)'}
+              {isSignup ? 'Emeza Kwiyandikisha (Sign Up)' : 'Injira (Login)'}
             </button>
           </form>
 
@@ -105,7 +136,7 @@
             {isSignup ? (
               <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
             ) : (
-              <p>Uri mushya hano? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
+              <p>Uri umunyeshuri mushya? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
             )}
           </div>
         </div>
