@@ -1,180 +1,121 @@
 <!DOCTYPE html>
-<html lang="rw">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Menya AI - E-Learning & Admin</title>
-    <style>
-        body { 
-            background: #0f172a; 
-            color: #fff; 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 20px;
-        }
-        h1 { color: #60a5fa; margin-bottom: 5px; text-align: center; }
-        p.subtitle { color: #94a3b8; margin-bottom: 20px; text-align: center; }
-
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .nav-tabs button { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .nav-tabs button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-
-        .section { display: none; width: 100%; max-width: 600px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); box-sizing: border-box; }
-        .section.active { display: block; }
-
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; outline: none; box-sizing: border-box; }
-        button.action-btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        button.action-btn:hover { background: #2563eb; }
-
-        .chat-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .chat-box input { margin-bottom: 0; flex: 1; }
-        .ai-response { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3b82f6; font-size: 14px; }
-        
-        .video-wrapper { position: relative; width: 100%; height: 315px; background: #000; border-radius: 8px; overflow: hidden; margin-top: 10px; }
-        iframe { width: 100%; height: 100%; border: none; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menya AI Hub</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel Compiler for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
+<body class="bg-black text-gray-100 font-sans">
+  <div id="root"></div>
 
-    <h1>Menya AI Platform</h1>
-    <p class="subtitle">Wiga ubuhinzi binyuze muri video, ukaba wanamubaza ikibazo ikagusubiza!</p>
+  <!-- Component Logic -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-    <!-- Navigation Buttons zihuza Student na Admin -->
-    <div class="nav-tabs">
-        <button id="tabStudentBtn" class="active" onclick="switchTab('student')">Kwiga & Kubaza (Student)</button>
-        <button id="tabAdminBtn" onclick="switchTab('admin')">Gucunga Amasomo (Admin)</button>
-    </div>
+    function MenyaApp() {
+      const [activeTab, setActiveTab] = useState('courses');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [chatInput, setChatInput] = useState('');
+      const [isAiThinking, setIsAiThinking] = useState(false);
+      const videoRef = useRef(null);
+      const [isPlaying, setIsPlaying] = useState(false);
+      const [currentTime, setCurrentTime] = useState(0);
 
-    <!-- 1. STUDENT SECTION -->
-    <div id="studentSection" class="section active">
-        <h3>Baza Ikibazo cy'Ubuhinzi</h3>
-        <div class="chat-box">
-            <input type="text" id="userInput" placeholder="Urugero: Nshaka kumenya uko nahira inyanya...">
-            <button class="action-btn" style="width: auto;" id="askBtn" onclick="askAI()">Ohereza</button>
-        </div>
+      const [messages, setMessages] = useState([
+        { role: 'assistant', text: "Muraho! Ask me about Rwandan driving laws, TVET solar wiring, or crop rotation." }
+      ]);
 
-        <div id="aiAnswerContainer" style="display: none;">
-            <div class="ai-response" id="aiReplyText"></div>
-            <h4 id="courseTitle" style="color: #38bdf8; margin-bottom: 5px;"></h4>
-            <p id="courseDesc" style="color: #94a3b8; font-size: 13px; margin-top: 0;"></p>
-            <div class="video-wrapper">
-                <iframe id="courseVideo" src="" allowfullscreen></iframe>
+      const handleSendQuestion = async (e) => {
+        e.preventDefault();
+        if (!chatInput.trim() || isAiThinking) return;
+
+        const userText = chatInput;
+        setChatInput('');
+        setMessages(prev => [...prev, { role: 'user', text: userText }]);
+        setIsAiThinking(true);
+
+        try {
+          const res = await fetch('/api/ask-menya', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: userText })
+          });
+          const data = await res.json();
+          setMessages(prev => [...prev, { role: 'assistant', text: data.answer }]);
+        } catch (err) {
+          setMessages(prev => [...prev, { role: 'assistant', text: "Error connecting to server API." }]);
+        } finally {
+          setIsAiThinking(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-black text-white p-6">
+          <header className="border-b border-neutral-800 pb-4 mb-6 flex justify-between items-center">
+            <h1 className="text-xl font-bold text-emerald-400">MENYA AI HUB</h1>
+            <span className="text-xs text-neutral-400 bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800">
+              Rwanda TVET & Traffic Code
+            </span>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Main Video & Content Area */}
+            <div className="lg:col-span-8 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+              <h2 className="text-lg font-bold mb-4">TVET Solar & Driving Regulations Player</h2>
+              <div className="aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-neutral-800">
+                <video
+                  ref={videoRef}
+                  src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                  controls
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
+
+            {/* AI Assistant Chat Sidebar */}
+            <div className="lg:col-span-4 bg-neutral-900 border border-neutral-800 rounded-2xl flex flex-col h-[600px]">
+              <div className="p-4 border-b border-neutral-800 font-bold text-emerald-400">
+                Menya Assistant
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {messages.map((m, i) => (
+                  <div key={i} className={`p-3 rounded-xl text-xs ${m.role === 'user' ? 'bg-emerald-600 text-white ml-auto max-w-[80%]' : 'bg-neutral-950 text-neutral-200 border border-neutral-800 max-w-[90%]'}`}>
+                    {m.text}
+                  </div>
+                ))}
+                {isAiThinking && (
+                  <div className="text-xs text-neutral-500 animate-pulse">Searching documents...</div>
+                )}
+              </div>
+              <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask a question..."
+                  className="flex-1 bg-black border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                />
+                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold">
+                  Send
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
-    </div>
+      );
+    }
 
-    <!-- 2. ADMIN SECTION -->
-    <div id="adminSection" class="section">
-        <h3>Shyiramo Isomo rya Video Nshya (Admin)</h3>
-        <input type="text" id="adminTitle" placeholder="Mutwe w'isomo (Urugero: Gutera ifumbire y'imborera)">
-        <input type="text" id="adminVideoUrl" placeholder="YouTube Embed URL (Urugero: https://www.youtube.com/embed/...)">
-        <textarea id="adminDesc" placeholder="Ibisobanuro by'isomo..."></textarea>
-        <input type="text" id="adminKeywords" placeholder="Keywords zitandukanijwe na koma (urugero: ifumbire,imborera,ubutaka)">
-        <button class="action-btn" id="saveCourseBtn" onclick="addCourse()">Emeza Ubike Isomo</button>
-        <p id="adminMsg" style="margin-top: 10px; font-size: 13px; text-align: center;"></p>
-    </div>
-
-    <script>
-        // Function yo guhindura hagati ya Student na Admin tabs
-        function switchTab(tab) {
-            const studentSec = document.getElementById('studentSection');
-            const adminSec = document.getElementById('adminSection');
-            const studentBtn = document.getElementById('tabStudentBtn');
-            const adminBtn = document.getElementById('tabAdminBtn');
-
-            if (tab === 'student') {
-                studentSec.classList.add('active');
-                adminSec.classList.remove('active');
-                studentBtn.classList.add('active');
-                adminBtn.classList.remove('active');
-            } else {
-                adminSec.classList.add('active');
-                studentSec.classList.remove('active');
-                adminBtn.classList.add('active');
-                studentBtn.classList.remove('active');
-            }
-        }
-
-        // Function ikora iyo umunyeshuri abajije ikibazo
-        async function askAI() {
-            const inputEl = document.getElementById('userInput');
-            const message = inputEl.value.trim();
-            if (!message) return;
-
-            const askBtn = document.getElementById('askBtn');
-            askBtn.innerText = "Birashakishwa...";
-
-            try {
-                const res = await fetch('/api/student/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-
-                const data = await res.json();
-                if (data.course) {
-                    document.getElementById('aiReplyText').innerText = data.answer;
-                    document.getElementById('courseTitle').innerText = data.course.title;
-                    document.getElementById('courseDesc').innerText = data.course.description;
-                    document.getElementById('courseVideo').src = data.course.video_url;
-                    document.getElementById('aiAnswerContainer').style.display = 'block';
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Habaye ikosa mu gusubiza.");
-            } finally {
-                askBtn.innerText = "Ohereza";
-            }
-        }
-
-        // Function ikora iyo Admin yemeje ko abika isomo rya video nshya
-        async function addCourse() {
-            const title = document.getElementById('adminTitle').value.trim();
-            const video_url = document.getElementById('adminVideoUrl').value.trim();
-            const description = document.getElementById('adminDesc').value.trim();
-            const keywords = document.getElementById('adminKeywords').value.trim();
-            const msgEl = document.getElementById('adminMsg');
-
-            if (!title || !video_url) {
-                msgEl.style.color = '#ef4444';
-                msgEl.innerText = "Nyamuneka uzuza umutwe na Video URL.";
-                return;
-            }
-
-            const saveBtn = document.getElementById('saveCourseBtn');
-            saveBtn.innerText = "Birabikwa...";
-
-            try {
-                const res = await fetch('/api/admin/add-course', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, video_url, description, keywords })
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    msgEl.style.color = '#22c55e';
-                    msgEl.innerText = data.message;
-                    // Gusiba utubaho two kwandikamo
-                    document.getElementById('adminTitle').value = '';
-                    document.getElementById('adminVideoUrl').value = '';
-                    document.getElementById('adminDesc').value = '';
-                    document.getElementById('adminKeywords').value = '';
-                } else {
-                    msgEl.style.color = '#ef4444';
-                    msgEl.innerText = data.error || "Habaye ikosa ryo kubika.";
-                }
-            } catch (err) {
-                console.error(err);
-                msgEl.style.color = '#ef4444';
-                msgEl.innerText = "Ntibyashobokaga kuvugana na server.";
-            } finally {
-                saveBtn.innerText = "Emeza Ubike Isomo";
-            }
-        }
-    </script>
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<MenyaApp />);
+  </script>
 </body>
 </html>
