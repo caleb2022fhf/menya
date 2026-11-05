@@ -19,17 +19,32 @@
       const [isSignup, setIsSignup] = useState(false);
       const [username, setUsername] = useState('');
       const [password, setPassword] = useState('');
+      const [profilePic, setProfilePic] = useState('');
+
+      // Gusoma ifoto y'umunyeshuri igihe ari kwiyandikisha
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setProfilePic(reader.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
 
       const handleSubmit = (e) => {
         e.preventDefault();
         if (!username.trim()) return;
 
-        // Kubika izina ry'umunyeshuri muri browser
+        // Kubika izina na Avatar muri localStorage
         localStorage.setItem('menya_current_user', username);
-        alert(isSignup ? "Konti yafunguwe neza! Urinjira kuri Dashboard..." : "Mwinjiye neza! Murerekanwa kuri Dashboard...");
+        if (profilePic) {
+          localStorage.setItem(`menya_avatar_${username}`, profilePic);
+        }
 
-        // Guhita yimurirwa kuri dashboard page
-        window.location.href = 'dashboard.html';
+        alert(isSignup ? "Konti yafunguwe neza! Urinjira..." : "Mwinjiye neza!");
+        window.location.href = 'home.html';
       };
 
       return (
@@ -68,6 +83,18 @@
                 className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
               />
             </div>
+
+            {isSignup && (
+              <div>
+                <label className="block text-xs text-neutral-400 mb-1">Ifoto y'Umwirondoro (Profile Picture)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full bg-black border border-neutral-800 p-2 rounded-xl text-xs text-neutral-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500"
+                />
+              </div>
+            )}
 
             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
               {isSignup ? 'Emeza konti (Sign Up)' : 'Injira (Login)'}
