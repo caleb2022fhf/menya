@@ -10,7 +10,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <!-- Babel Compiler for JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -18,9 +18,17 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+    const { useState, useEffect } = React;
 
     function MenyaApp() {
+      // Menya niba umunyeshuri yarinjiye cyangwa agomba gukora Login/Signup
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const [isSignup, setIsSignup] = useState(false);
+      const [usernameInput, setUsernameInput] = useState('');
+      const [passwordInputAuth, setPasswordInputAuth] = useState('');
+      const [currentUser, setCurrentUser] = useState('');
+
+      // Dashboard States
       const [activeTab, setActiveTab] = useState('courses');
       const [courses, setCourses] = useState([
         {
@@ -49,26 +57,19 @@
       ]);
       const [selectedCourse, setSelectedCourse] = useState(courses[0]);
 
-      // Ububiko bw'isomo ry'umunyeshuri (Progress Tracking)
-      const [progressData, setProgressData] = useState({
-        timeLeft: 25 * 60,
-        mode: 'study',
-        completed: false
-      });
-
-      // Timer (Iminota 25 y'Isomo & 10 ya Quiz)
+      // Timer & Quiz states (25 min isomo & 10 min quiz)
       const [timeLeft, setTimeLeft] = useState(25 * 60); 
       const [isTimerRunning, setIsTimerRunning] = useState(false);
-      const [mode, setMode] = useState('study'); // 'study' (25 min) cyangwa 'quiz' (10 min)
+      const [mode, setMode] = useState('study'); 
       const [selectedAnswers, setSelectedAnswers] = useState({});
 
-      // Admin Modal & Umutekano
+      // Admin Modal & Umutekano (Ctrl + Shift + C)
       const [showAdminModal, setShowAdminModal] = useState(false);
       const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
       const [passwordInput, setPasswordInput] = useState('');
       const [authError, setAuthError] = useState(false);
 
-      // Form ya Admin yo kongera Isomo nshya
+      // Admin Form inputs
       const [newTitle, setNewTitle] = useState('');
       const [newCategory, setNewCategory] = useState('Driving Laws');
       const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
@@ -82,7 +83,16 @@
         { role: 'assistant', text: "Muraho! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano." }
       ]);
 
-      // Gukoresha shortcut Ctrl + Shift + C kuri Admin (Umurongo wa 62-72)
+      // Reba niba hari umunyeshuri wari wasize winjiye mbere
+      useEffect(() => {
+        const savedUser = localStorage.getItem('menya_current_user');
+        if (savedUser) {
+          setCurrentUser(savedUser);
+          setIsLoggedIn(true);
+        }
+      }, []);
+
+      // Gukoresha shortcut Ctrl + Shift + C kuri Admin
       useEffect(() => {
         const handleKeyDown = (e) => {
           if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
@@ -94,31 +104,29 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Kugarura aho umunyeshuri yari ageze (Resume) cyangwa kutangirira kuri zero ku mushya
+      // Kugarura aho umunyeshuri yari ageze
       useEffect(() => {
-        const saved = localStorage.getItem(`menya_progress_${selectedCourse.id}`);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setProgressData(parsed);
-          setTimeLeft(parsed.timeLeft || 25 * 60);
-          setMode(parsed.mode || 'study');
-        } else {
-          // Iyo ari ubwa mbere afunguye iki somo
-          setProgressData({ timeLeft: 25 * 60, mode: 'study', completed: false });
-          setTimeLeft(25 * 60);
-          setMode('study');
+        if (currentUser) {
+          const saved = localStorage.getItem(`menya_progress_${currentUser}_${selectedCourse.id}`);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setTimeLeft(parsed.timeLeft || 25 * 60);
+            setMode(parsed.mode || 'study');
+          } else {
+            setTimeLeft(25 * 60);
+            setMode('study');
+          }
         }
-      }, [selectedCourse]);
+      }, [selectedCourse, currentUser]);
 
-      // Timer Logic (Iminota 25 Isomo -> Iminota 10 Quiz)
+      // Timer Logic
       useEffect(() => {
         let timer;
-        if (isTimerRunning && timeLeft > 0) {
+        if (isTimerRunning && timeLeft > 0 && isLoggedIn) {
           timer = setInterval(() => {
             setTimeLeft(prev => {
               const updated = prev - 1;
-              const currentProg = { timeLeft: updated, mode: mode };
-              localStorage.setItem(`menya_progress_${selectedCourse.id}`, JSON.stringify(currentProg));
+              localStorage.setItem(`menya_progress_${currentUser}_${selectedCourse.id}`, JSON.stringify({ timeLeft: updated, mode }));
               return updated;
             });
           }, 1000);
@@ -134,12 +142,27 @@
           }
         }
         return () => clearInterval(timer);
-      }, [isTimerRunning, timeLeft, mode, selectedCourse.id]);
+      }, [isTimerRunning, timeLeft, mode, selectedCourse.id, isLoggedIn, currentUser]);
 
       const formatTime = (secs) => {
         const m = Math.floor(secs / 60);
         const s = secs % 60;
         return `${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+
+      // Handler yo gukora Login cyangwa Signup
+      const handleAuthSubmit = (e) => {
+        e.preventDefault();
+        if (!usernameInput.trim()) return;
+        setCurrentUser(usernameInput);
+        localStorage.setItem('menya_current_user', usernameInput);
+        setIsLoggedIn(true);
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('menya_current_user');
+        setIsLoggedIn(false);
+        setCurrentUser('');
       };
 
       const handleAdminLogin = (e) => {
@@ -175,7 +198,7 @@
         };
         setCourses([...courses, newCourseObj]);
         setSelectedCourse(newCourseObj);
-        alert("Isomo n'isaha byongewe neza!");
+        alert("Isomo n'isaha byongewe neza kuri Web!");
         setNewTitle('');
         setNewYoutubeUrl('');
         setNewDesc('');
@@ -207,6 +230,64 @@
         }
       };
 
+      // 1. Niba umunyeshuri atarinjira (Aracyari kuri Login / Signup page)
+      if (!isLoggedIn) {
+        return (
+          <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold mx-auto text-lg">
+                  M
+                </div>
+                <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
+                <p className="text-xs text-neutral-400">
+                  {isSignup ? 'Fungura konti nshya yo kwiga' : 'Injira muri konte yawe kugira ngo ukomeze wige'}
+                </p>
+              </div>
+
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Izina cyangwa Imeyili (Username)</label>
+                  <input
+                    type="text"
+                    required
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    placeholder="Andika izina ryawe..."
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Ijambo ry'Ibanga (Password)</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordInputAuth}
+                    onChange={(e) => setPasswordInputAuth(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
+                  {isSignup ? 'Emeza konti (Sign Up)' : 'Injira (Login)'}
+                </button>
+              </form>
+
+              <div className="text-center text-xs text-neutral-400">
+                {isSignup ? (
+                  <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
+                ) : (
+                  <p>Uri mushya hano? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // 2. Niba yamaze kwinjira (Dashboard nyirizina)
       return (
         <div className="min-h-screen bg-black text-white font-sans flex flex-col">
           {/* Header Bar */}
@@ -216,296 +297,3 @@
                 M
               </div>
               <h1 className="text-base font-bold tracking-tight text-white">
-                MENYA <span className="text-emerald-400 text-xs font-mono">AI HUB (RWANDA)</span>
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
-              <button
-                onClick={() => setActiveTab('courses')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === 'courses' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'}`}
-              >
-                🎥 Isomo & Quiz
-              </button>
-              <button
-                onClick={() => setActiveTab('timetable')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${activeTab === 'timetable' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'}`}
-              >
-                📅 Timetable & Schedule
-              </button>
-            </div>
-          </header>
-
-          {/* Main Content Area */}
-          <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <div className="lg:col-span-8 space-y-6">
-              {activeTab === 'courses' ? (
-                <>
-                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
-                    {/* Timer Switch Control */}
-                    <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
-                      <div>
-                        <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (25 min)' : '✍️ Quiz (10 min)'}</span>
-                        <div className="text-xl font-bold font-mono text-white">{formatTime(timeLeft)}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`px-4 py-2 rounded-lg text-xs font-bold ${isTimerRunning ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}`}>
-                          {isTimerRunning ? 'Hagarika (Pause)' : 'Tangira (Start)'}
-                        </button>
-                        <button onClick={() => { setMode(mode === 'study' ? 'quiz' : 'study'); setTimeLeft(mode === 'study' ? 10 * 60 : 25 * 60); }} className="px-3 py-2 bg-neutral-800 rounded-lg text-xs">
-                          Hindura Intambwe
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Video Player or Quiz Display */}
-                    {mode === 'study' ? (
-                      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-neutral-800">
-                        <iframe
-                          src={selectedCourse.embedUrl}
-                          title={selectedCourse.title}
-                          className="w-full h-full border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
-                    ) : (
-                      <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
-                        <h3 className="text-sm font-bold text-emerald-400">Isuzuma ry'Ubumenyi (Quiz - 10 Min)</h3>
-                        {selectedCourse.quiz && selectedCourse.quiz.map((qObj, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
-                            <div className="grid grid-cols-1 gap-2">
-                              {qObj.options.map((opt, oIdx) => (
-                                <button
-                                  key={oIdx}
-                                  onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})}
-                                  className={`p-2.5 rounded-lg text-xs text-left border ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-300'}`}
-                                >
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="p-2 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-xs text-emerald-400 font-mono px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20">
-                            {selectedCourse.category}
-                          </span>
-                          <h2 className="text-lg font-bold text-white mt-2">{selectedCourse.title}</h2>
-                        </div>
-                        <div className="text-right text-xs text-neutral-400 bg-neutral-950 px-3 py-1.5 rounded-lg border border-neutral-800">
-                          🕒 {selectedCourse.scheduleTime}
-                        </div>
-                      </div>
-                      <p className="text-sm text-neutral-400">{selectedCourse.description}</p>
-                    </div>
-                  </div>
-
-                  {/* Course Selector Grid */}
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400">Hitamo Isomo</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {courses.map((c) => (
-                        <div
-                          key={c.id}
-                          onClick={() => setSelectedCourse(c)}
-                          className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedCourse.id === c.id ? 'bg-neutral-900 border-emerald-500/50 shadow-md' : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'}`}
-                        >
-                          <span className="text-[10px] text-emerald-400 font-mono">{c.category}</span>
-                          <h4 className="text-sm font-bold text-white line-clamp-1 mt-1">{c.title}</h4>
-                          <p className="text-xs text-neutral-400 mt-2">Gahunda: {c.scheduleTime}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* Timetable View */
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-white">Student Study Timetable</h2>
-                    <p className="text-xs text-neutral-400">Gahunda y'amasomo yashyizweho na Admin.</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {courses.map((c) => (
-                      <div key={c.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-emerald-400 font-mono">{c.category}</span>
-                          <h4 className="text-sm font-bold text-white mt-0.5">{c.title}</h4>
-                        </div>
-                        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-300">
-                          📅 {c.scheduleTime}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column: Menya AI Chat */}
-            <div className="lg:col-span-4 flex flex-col h-[700px] bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-4 border-b border-neutral-800 bg-neutral-950 flex items-center justify-between">
-                <span className="text-sm font-bold text-white flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Menya Assistant (AI)
-                </span>
-                <span className="text-[10px] text-neutral-400 font-mono bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">
-                  RAG Active
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((m, idx) => (
-                  <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${m.role === 'user' ? 'bg-emerald-600 text-white font-medium' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}`}>
-                      {m.text}
-                    </div>
-                  </div>
-                ))}
-                {isAiThinking && (
-                  <div className="text-xs text-neutral-500 animate-pulse font-mono">Gushakisha muri PDF...</div>
-                )}
-              </div>
-
-              <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 bg-neutral-950 flex gap-2">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Baza ikibazo cyawe..."
-                  className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
-                />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-medium">
-                  Send
-                </button>
-              </form>
-            </div>
-
-          </main>
-
-          {/* Admin Dashboard Modal (Ctrl + Shift + C & Password Caleb@2026) */}
-          {showAdminModal && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-6 relative shadow-2xl">
-                <button 
-                  onClick={() => { setShowAdminModal(false); setIsAdminLoggedIn(false); setAuthError(false); }}
-                  className="absolute top-4 right-4 text-neutral-400 hover:text-white text-sm font-bold"
-                >
-                  ✕
-                </button>
-
-                {!isAdminLoggedIn ? (
-                  <form onSubmit={handleAdminLogin} className="space-y-4">
-                    <div>
-                      <h3 className="text-base font-bold text-white">Administrator Login</h3>
-                      <p className="text-xs text-neutral-400">Injiza password kugira ngo wongereho amasomo ya YouTube.</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        placeholder="Injiza password..."
-                        className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                        autoFocus
-                      />
-                      {authError && <p className="text-xs text-red-500 mt-1">Password si yo! Shyuha uyikore neza.</p>}
-                    </div>
-
-                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold">
-                      Emeza & Fungura Dashboard
-                    </button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleAddCourse} className="space-y-4">
-                    <div>
-                      <h3 className="text-base font-bold text-emerald-400">Admin Video & Timetable Upload</h3>
-                      <p className="text-xs text-neutral-400">Shyiramo YouTube link n'isaha y'isomo.</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Umutwe w'Isomo (Title)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        placeholder="e.g. Traffic Signs Masterclass"
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Icyiciro (Category)</label>
-                      <select
-                        value={newCategory}
-                        onChange={(e) => setNewCategory(e.target.value)}
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      >
-                        <option value="Driving Laws">Driving Laws</option>
-                        <option value="TVET Technical">TVET Technical</option>
-                        <option value="Agriculture">Agriculture</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">YouTube Video Link (URL)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newYoutubeUrl}
-                        onChange={(e) => setNewYoutubeUrl(e.target.value)}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Timetable Schedule (e.g. Friday, 10:00 AM)</label>
-                      <input
-                        type="text"
-                        value={newSchedule}
-                        onChange={(e) => setNewSchedule(e.target.value)}
-                        placeholder="Friday, 10:00 AM"
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Ubusobanuro (Description)</label>
-                      <textarea
-                        value={newDesc}
-                        onChange={(e) => setNewDesc(e.target.value)}
-                        placeholder="Ubusobanuro bw'isomo..."
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white h-16"
-                      />
-                    </div>
-
-                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold">
-                      Ohereza Kuri Web
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<MenyaApp />);
-  </script>
-</body>
-</html>
