@@ -18,11 +18,13 @@
     function HomeApp() {
       const [activeTab, setActiveTab] = useState('courses');
       const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
+      const studentCategory = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
+      const studentIdNum = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026';
       
-      // Avatar State
       const [userAvatar, setUserAvatar] = useState('');
 
-      const [courses, setCourses] = useState([
+      // Amasomo ahuye n'ibyo umunyeshuri yihitiyemo igihe yiyandikishaga
+      const [courses] = useState([
         {
           id: 1,
           title: "Amategeko y'Omuhanda (Traffic Code)",
@@ -45,9 +47,23 @@
           quiz: [
             { q: "Ni uwuhe mugozi ukoreshwa kuri 12V 1000W inverter?", options: ["4 AWG", "12 AWG", "20 AWG"], answer: 0 }
           ]
+        },
+        {
+          id: 3,
+          title: "Ubuhinzi bwa kijyambere n'Ubworozi (Agriculture)",
+          category: "Agriculture",
+          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          description: "Uburyo bwo kongera umusaruro mu buhinzi no kwita ku matungo mu Rwanda.",
+          scheduleTime: "Friday, 10:00 AM",
+          quiz: [
+            { q: "Ni ubuhe buryo bwiza bwo kuhira mu gihe cy'izuba?", options: ["Kuhira ku mirongo (Drip Irrigation)", "Kwitera amazi menshi yose", "Kureka imvura"], answer: 0 }
+          ]
         }
       ]);
-      const [selectedCourse, setSelectedCourse] = useState(courses[0]);
+
+      // Guhitamo isomo rijyanye n'iry'umunyeshuri yihitiyemo cyangwa irya mbere
+      const initialCourse = courses.find(c => c.category === studentCategory) || courses[0];
+      const [selectedCourse, setSelectedCourse] = useState(initialCourse);
 
       // Timer (25 min isomo & 10 min quiz)
       const [timeLeft, setTimeLeft] = useState(25 * 60); 
@@ -106,7 +122,6 @@
         }
       }, [selectedCourse, currentUser]);
 
-      // Guhindura ifoto ya Profile kuri Home
       const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -182,7 +197,7 @@
           scheduleTime: newSchedule || "Self-Paced",
           quiz: [{ q: "Ikibazo cy'icyitegererezo?", options: ["Yego", "Oya"], answer: 0 }]
         };
-        setCourses([...courses, newObj]);
+        courses.push(newObj);
         setSelectedCourse(newObj);
         alert("Isomo ryongewe neza kuri Web!");
         setShowAdminModal(false);
@@ -236,9 +251,10 @@
                     <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                   </label>
                 </div>
-                <span className="text-xs text-neutral-300">
-                  <strong className="text-emerald-400">{currentUser}</strong>
-                </span>
+                <div className="text-xs">
+                  <strong className="text-emerald-400 block">{currentUser}</strong>
+                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum}</span>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
@@ -252,67 +268,54 @@
             </div>
           </header>
 
-          {/* Main Body */}
+          {/* Main Body - Nta masomo yo hasi arimo, yasubijwe ku isomo ry'umunyeshuri bwite */}
           <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               {activeTab === 'courses' ? (
-                <>
-                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
-                    <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
-                      <div>
-                        <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (25 min)' : '✍️ Quiz (10 min)'}</span>
-                        <div className="text-xl font-bold font-mono text-white">{formatTime(timeLeft)}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`px-4 py-2 rounded-lg text-xs font-bold ${isTimerRunning ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}`}>
-                          {isTimerRunning ? 'Pause' : 'Tangira'}
-                        </button>
-                        <button onClick={() => { setMode(mode === 'study' ? 'quiz' : 'study'); setTimeLeft(mode === 'study' ? 10 * 60 : 25 * 60); }} className="px-3 py-2 bg-neutral-800 rounded-lg text-xs">
-                          Hindura Intambwe
-                        </button>
-                      </div>
-                    </div>
-
-                    {mode === 'study' ? (
-                      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-neutral-800">
-                        <iframe src={selectedCourse.embedUrl} className="w-full h-full border-0" allowFullScreen></iframe>
-                      </div>
-                    ) : (
-                      <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
-                        <h3 className="text-sm font-bold text-emerald-400">Quiz (10 Min)</h3>
-                        {selectedCourse.quiz && selectedCourse.quiz.map((qObj, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
-                            <div className="grid grid-cols-1 gap-2">
-                              {qObj.options.map((opt, oIdx) => (
-                                <button key={oIdx} onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} className={`p-2.5 rounded-lg text-xs text-left border ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-300'}`}>
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                     <div>
-                      <h2 className="text-base font-bold text-white">{selectedCourse.title}</h2>
-                      <p className="text-xs text-neutral-400 mt-1">{selectedCourse.description}</p>
+                      <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (25 min)' : '✍️ Quiz (10 min)'}</span>
+                      <div className="text-xl font-bold font-mono text-white">{formatTime(timeLeft)}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`px-4 py-2 rounded-lg text-xs font-bold ${isTimerRunning ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}`}>
+                        {isTimerRunning ? 'Pause' : 'Tangira'}
+                      </button>
+                      <button onClick={() => { setMode(mode === 'study' ? 'quiz' : 'study'); setTimeLeft(mode === 'study' ? 10 * 60 : 25 * 60); }} className="px-3 py-2 bg-neutral-800 rounded-lg text-xs">
+                        Hindura Intambwe
+                      </button>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase text-neutral-400">Hitamo Isomo</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {courses.map((c) => (
-                        <div key={c.id} onClick={() => setSelectedCourse(c)} className={`p-4 rounded-xl border cursor-pointer ${selectedCourse.id === c.id ? 'bg-neutral-900 border-emerald-500' : 'bg-neutral-950 border-neutral-800'}`}>
-                          <span className="text-[10px] text-emerald-400 font-mono">{c.category}</span>
-                          <h4 className="text-sm font-bold text-white mt-1">{c.title}</h4>
+                  {mode === 'study' ? (
+                    <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-neutral-800">
+                      <iframe src={selectedCourse.embedUrl} className="w-full h-full border-0" allowFullScreen></iframe>
+                    </div>
+                  ) : (
+                    <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
+                      <h3 className="text-sm font-bold text-emerald-400">Quiz (10 Min)</h3>
+                      {selectedCourse.quiz && selectedCourse.quiz.map((qObj, idx) => (
+                        <div key={idx} className="space-y-2">
+                          <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {qObj.options.map((opt, oIdx) => (
+                              <button key={oIdx} onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} className={`p-2.5 rounded-lg text-xs text-left border ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-300'}`}>
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
+                  )}
+
+                  <div>
+                    <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">{selectedCourse.category}</span>
+                    <h2 className="text-base font-bold text-white mt-1">{selectedCourse.title}</h2>
+                    <p className="text-xs text-neutral-400 mt-1">{selectedCourse.description}</p>
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
                   <h2 className="text-lg font-bold text-white">Gahunda y'Amasomo (Timetable)</h2>
