@@ -1,60 +1,336 @@
 const express = require('express');
-const path = require('path');
 const app = express();
 
 app.use(express.json());
-// Serve static files from the public folder
-app.use(express.static(path.join(__dirname, 'public')));
 
-// RAG AI Endpoint
-app.post('/api/ask-menya', async (req, res) => {
-  try {
-    const { question } = req.body;
-
-    // Simulated RAG context matching uploaded driving & agriculture PDFs
-    const retrievedContext = `
-      Article 45: Speed limit inside Kigali city is strictly set to 40 km/h.
-      Solar Inverter Setup: For 12V 1000W loads, use 4 AWG copper wire.
-      Agriculture: Intercrop maize with climbing beans every 3 months for optimal nitrogen.
-    `;
-
-    // DeepSeek API call
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: "You are Menya AI for Rwanda. Answer strictly based on course context."
-          },
-          {
-            role: "user",
-            content: `Context: ${retrievedContext}\n\nQuestion: ${question}`
-          }
-        ]
-      })
-    });
-
-    const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content || "According to Rwandan regulations: " + question;
-
-    res.json({ success: true, answer });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Fallback to index.html for all other routes
+// Code yose ya Frontend na Backend iri hano hamwe kugira ngo bitaza gutuma screen iba umukara (blank screen)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Menya AI Hub - Rwanda</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+      <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+      <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+      <script src="https://unpkg.com/lucide@latest"></script>
+    </head>
+    <body class="bg-black text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
+      <div id="root"></div>
+
+      <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function MenyaApp() {
+          const [activeTab, setActiveTab] = useState('courses');
+          const [courses, setCourses] = useState([
+            {
+              id: 1,
+              title: "Amategeko y'Omuhanda (Traffic Code)",
+              category: "Driving Laws",
+              embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              description: "Kwiga amategeko y'umuhanda n'ibimenyetso byo mu nzira.",
+              quiz: [
+                { q: "Ni uwuhe muvudumu wemewe mu Mujyi wa Kigali?", options: ["40 km/h", "80 km/h", "100 km/h"], answer: 0 },
+                { q: "Ahanyurwa n'abanyamaguru hitwa ngo ki?", options: ["Zebra Crossing", "Highway", "Roundabout"], answer: 0 }
+              ]
+            },
+            {
+              id: 2,
+              title: "Ubumenyi bw'Amashanyarazi (TVET Solar)",
+              category: "TVET Technical",
+              embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              description: "Uburyo bwo gushyira ibyuma bikurura imirasire y'izuba.",
+              quiz: [
+                { q: "Ni uwuhe mugozi ukoreshwa kuri 12V 1000W?", options: ["4 AWG", "12 AWG", "20 AWG"], answer: 0 }
+              ]
+            }
+          ]);
+          const [selectedCourse, setSelectedCourse] = useState(courses[0]);
+
+          const [progressData, setProgressData] = useState({
+            videoTime: 0,
+            quizStarted: false,
+            score: null,
+            completed: false
+          });
+
+          const [timeLeft, setTimeLeft] = useState(25 * 60); 
+          const [isTimerRunning, setIsTimerRunning] = useState(false);
+          const [mode, setMode] = useState('study'); 
+          const [selectedAnswers, setSelectedAnswers] = useState({});
+
+          const [showAdminModal, setShowAdminModal] = useState(false);
+          const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+          const [passwordInput, setPasswordInput] = useState('');
+          const [authError, setAuthError] = useState(false);
+
+          const [newTitle, setNewTitle] = useState('');
+          const [newCategory, setNewCategory] = useState('Driving Laws');
+          const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
+          const [newDesc, setNewDesc] = useState('');
+
+          const [chatInput, setChatInput] = useState('');
+          const [messages, setMessages] = useState([
+            { role: 'assistant', text: "Muraho! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'amasomo yawe hano." }
+          ]);
+
+          useEffect(() => {
+            const handleKeyDown = (e) => {
+              if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+                e.preventDefault();
+                setShowAdminModal(true);
+              }
+            };
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+          }, []);
+
+          useEffect(() => {
+            const saved = localStorage.getItem(\`menya_progress_\${selectedCourse.id}\`);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              setProgressData(parsed);
+              setTimeLeft(parsed.timeLeft || 25 * 60);
+            } else {
+              setProgressData({ videoTime: 0, quizStarted: false, score: null, completed: false });
+              setTimeLeft(25 * 60);
+            }
+          }, [selectedCourse]);
+
+          useEffect(() => {
+            let timer;
+            if (isTimerRunning && timeLeft > 0) {
+              timer = setInterval(() => {
+                setTimeLeft(prev => {
+                  const updated = prev - 1;
+                  const currentProg = { ...progressData, timeLeft: updated };
+                  localStorage.setItem(\`menya_progress_\${selectedCourse.id}\`, JSON.stringify(currentProg));
+                  return updated;
+                });
+              }, 1000);
+            } else if (timeLeft === 0 && isTimerRunning) {
+              setIsTimerRunning(false);
+              if (mode === 'study') {
+                alert("Iminota 25 y'isomo irangiye! Ubu ushobora gukora Quiz y'iminota 10.");
+                setMode('quiz');
+                setTimeLeft(10 * 60);
+                setIsTimerRunning(true);
+              } else {
+                alert("Iminota 10 ya Quiz irangiye!");
+              }
+            }
+            return () => clearInterval(timer);
+          }, [isTimerRunning, timeLeft, mode, progressData, selectedCourse.id]);
+
+          const formatTime = (secs) => {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            return \`\${m}:\${s < 10 ? '0' : ''}\${s}\`;
+          };
+
+          const handleAdminLogin = (e) => {
+            e.preventDefault();
+            if (passwordInput === 'Caleb@2026') {
+              setIsAdminLoggedIn(true);
+              setAuthError(false);
+              setPasswordInput('');
+            } else {
+              setAuthError(true);
+            }
+          };
+
+          const convertToEmbed = (url) => {
+            if (!url) return '';
+            if (url.includes('embed/')) return url;
+            const regExp = /^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=)([^#\\&\\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? \`https://www.youtube.com/embed/\${match[2]}\` : url;
+          };
+
+          const handleAddCourse = (e) => {
+            e.preventDefault();
+            const formattedUrl = convertToEmbed(newYoutubeUrl);
+            const newObj = {
+              id: courses.length + 1,
+              title: newTitle,
+              category: newCategory,
+              embedUrl: formattedUrl,
+              description: newDesc,
+              quiz: [{ q: "Ikibazo cy'icyitegererezo?", options: ["Yego", "Oya"], answer: 0 }]
+            };
+            setCourses([...courses, newObj]);
+            setSelectedCourse(newObj);
+            alert("Isomo ryongewe neza kuri Web!");
+            setShowAdminModal(false);
+            setNewTitle('');
+            setNewYoutubeUrl('');
+            setNewDesc('');
+          };
+
+          const handleSendQuestion = (e) => {
+            e.preventDefault();
+            if (!chatInput.trim()) return;
+            const userText = chatInput;
+            setChatInput('');
+            setMessages(prev => [...prev, { role: 'user', text: userText }]);
+
+            setTimeout(() => {
+              setMessages(prev => [...prev, { role: 'assistant', text: "Aha ni igisubizo cya Menya AI ku kibazo cyawe: " + userText }]);
+            }, 600);
+          };
+
+          return (
+            <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+              <header className="border-b border-neutral-800 bg-neutral-950 px-6 py-4 flex items-center justify-between">
+                <h1 className="text-base font-bold text-white flex items-center gap-2">
+                  MENYA <span className="text-emerald-400 text-xs font-mono">AI HUB (RWANDA)</span>
+                </h1>
+                <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
+                  <button onClick={() => setActiveTab('courses')} className={\`px-4 py-1.5 rounded-lg text-xs font-medium \${activeTab === 'courses' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}\`}>🎥 Isomo & Quiz</button>
+                  <button onClick={() => setActiveTab('timetable')} className={\`px-4 py-1.5 rounded-lg text-xs font-medium \${activeTab === 'timetable' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}\`}>📅 Gahunda (Timetable)</button>
+                </div>
+              </header>
+
+              <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
+                  {activeTab === 'courses' ? (
+                    <>
+                      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
+                        <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+                          <div>
+                            <span className="text-xs text-emerald-400 font-mono uppercase">{mode === 'study' ? '📖 Isomo (25 min)' : '✍️ Quiz (10 min)'}</span>
+                            <div className="text-xl font-bold font-mono text-white">{formatTime(timeLeft)}</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={\`px-4 py-2 rounded-lg text-xs font-bold \${isTimerRunning ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}\`}>
+                              {isTimerRunning ? 'Hagarika (Pause)' : 'Tangira (Start)'}
+                            </button>
+                            <button onClick={() => { setMode(mode === 'study' ? 'quiz' : 'study'); setTimeLeft(mode === 'study' ? 10 * 60 : 25 * 60); }} className="px-3 py-2 bg-neutral-800 rounded-lg text-xs">
+                              Hindura Intambwe
+                            </button>
+                          </div>
+                        </div>
+
+                        {mode === 'study' ? (
+                          <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-neutral-800">
+                            <iframe src={selectedCourse.embedUrl} className="w-full h-full border-0" allowFullScreen></iframe>
+                          </div>
+                        ) : (
+                          <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
+                            <h3 className="text-sm font-bold text-emerald-400">Isuzuma ry'Ubumenyi (Quiz - 10 Min)</h3>
+                            {selectedCourse.quiz.map((qObj, idx) => (
+                              <div key={idx} className="space-y-2">
+                                <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                  {qObj.options.map((opt, oIdx) => (
+                                    <button
+                                      key={oIdx}
+                                      onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})}
+                                      className={\`p-2.5 rounded-lg text-xs text-left border \${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-300'}\`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div>
+                          <h2 className="text-base font-bold text-white">{selectedCourse.title}</h2>
+                          <p className="text-xs text-neutral-400 mt-1">{selectedCourse.description}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400">Hitamo Isomo</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {courses.map((c) => (
+                            <div key={c.id} onClick={() => setSelectedCourse(c)} className={\`p-4 rounded-xl border cursor-pointer \${selectedCourse.id === c.id ? 'bg-neutral-900 border-emerald-500' : 'bg-neutral-950 border-neutral-800'}\`}>
+                              <span className="text-[10px] text-emerald-400 font-mono">{c.category}</span>
+                              <h4 className="text-sm font-bold text-white mt-1">{c.title}</h4>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+                      <h2 className="text-lg font-bold text-white">Gahunda y'amasomo (Timetable)</h2>
+                      <p className="text-xs text-neutral-400">Buri munyeshuri yiga amasomo ye mu gihe cyagenewe afite n'umwanya wa Quiz.</p>
+                      <div className="space-y-2 mt-4">
+                        {courses.map(c => (
+                          <div key={c.id} className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex justify-between items-center text-xs">
+                            <span>{c.title}</span>
+                            <span className="text-emerald-400 font-mono">Igihe cyose cyagenewe</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="lg:col-span-4 flex flex-col h-[650px] bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="p-4 border-b border-neutral-800 bg-neutral-950 text-xs font-bold text-emerald-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Menya Assistant (AI)
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {messages.map((m, i) => (
+                      <div key={i} className={\`flex \${m.role === 'user' ? 'justify-end' : 'justify-start'}\`}>
+                        <div className={\`max-w-[85%] rounded-2xl px-4 py-3 text-xs \${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}\`}>
+                          {m.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 bg-neutral-950 flex gap-2">
+                    <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Baza ikibazo cyawe..." className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold">Ohereza</button>
+                  </form>
+                </div>
+              </main>
+
+              {showAdminModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 relative">
+                    <button onClick={() => setShowAdminModal(false)} className="absolute top-4 right-4 text-neutral-400">✕</button>
+                    {!isAdminLoggedIn ? (
+                      <form onSubmit={handleAdminLogin} className="space-y-4">
+                        <h3 className="text-base font-bold text-white">Injira nka Admin</h3>
+                        <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="Injiza ijambo ry'ibanga..." className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white" />
+                        {authError && <p className="text-xs text-red-500">Ijambo ry'ibanga si ryo!</p>}
+                        <button type="submit" className="w-full bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold">Emeza</button>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleAddCourse} className="space-y-3">
+                        <h3 className="text-base font-bold text-emerald-400">Ongeraho Isomo kuri YouTube</h3>
+                        <input type="text" placeholder="Umutwe w'isomo" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white" required />
+                        <input type="text" placeholder="YouTube Link (URL)" value={newYoutubeUrl} onChange={(e) => setNewYoutubeUrl(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white" required />
+                        <textarea placeholder="Ubusobanuro bw'isomo" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white h-20" />
+                        <button type="submit" className="w-full bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold">Emeza no Kohereza</button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MenyaApp />);
+      </script>
+    </body>
+    </html>
+  `);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Menya app running on port ${PORT}`);
+  console.log(\`Menya app irimo gukora kuri port \${PORT}\`);
 });
