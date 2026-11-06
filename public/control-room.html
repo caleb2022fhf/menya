@@ -3,389 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menya AI Hub - Control Room (Admin)</title>
+  <title>Menya AI Hub - Login / Sign Up</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-neutral-950 text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
-  <div id="control-room-root"></div>
+<body class="bg-black text-gray-100 font-sans flex items-center justify-center min-h-screen p-4">
+  <div id="index-root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState } = React;
 
-    function ControlRoomApp() {
-      const [activeTab, setActiveTab] = useState('students');
-      const [studentsList, setStudentsList] = useState([]);
-      
-      // Timetable & Course Upload Management State
-      const [timetableList, setTimetableList] = useState([
-        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Ku Mbere (Monday)", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-        { id: 2, course: "Off-Grid Solar PV Wiring", trade: "TVET Technical", day: "Ku Kabiri (Tuesday)", time: "02:00 PM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
-      ]);
+    function IndexAuthApp() {
+      const [isSignup, setIsSignup] = useState(false);
+      const [username, setUsername] = useState('');
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('Driving Laws');
+      const [profilePic, setProfilePic] = useState('');
 
-      const [newCourseName, setNewCourseName] = useState('');
-      const [newTrade, setNewTrade] = useState('Driving Laws');
-      const [newDay, setNewDay] = useState('Ku Mbere (Monday)');
-      const [newTimeSlot, setNewTimeSlot] = useState('');
-      const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
-
-      useEffect(() => {
-        const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
-        const category = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
-        const studentId = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026-001';
-        const loginCount = localStorage.getItem(`menya_login_count_${currentUser}`) || '3';
-
-        const loadedStudents = [
-          { 
-            username: currentUser, 
-            email: currentUser.includes('@') ? currentUser : `${currentUser}@menya.rw`, 
-            id: studentId, 
-            trade: category, 
-            role: currentUser.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
-            studyCount: loginCount 
-          },
-          { username: "Jean Bosco", email: "bosco@gmail.com", id: "DRV-2026-009", trade: "Driving Laws", role: "Student", studyCount: "5" },
-          { username: "Marie Claire", email: "claire@gmail.com", id: "AGR-2026-041", trade: "Agriculture", role: "Student", studyCount: "2" }
-        ];
-
-        setStudentsList(loadedStudents);
-      }, []);
-
-      const handleAddTimetable = (e) => {
-        e.preventDefault();
-        if (!newCourseName || !newTimeSlot || !newYoutubeUrl) return;
-        
-        const newItem = {
-          id: timetableList.length + 1,
-          course: newCourseName,
-          trade: newTrade,
-          day: newDay,
-          time: newTimeSlot,
-          youtubeUrl: newYoutubeUrl
-        };
-
-        const updatedList = [...timetableList, newItem];
-        setTimetableList(updatedList);
-        localStorage.setItem('menya_admin_timetable', JSON.stringify(updatedList));
-
-        setNewCourseName('');
-        setNewTimeSlot('');
-        setNewYoutubeUrl('');
-        alert("Isomo na Timetable byongewe neza mu ishami ryabyo!");
-      };
-
-      const handleDeleteStudent = (username) => {
-        if (confirm(`Uremeye gusiba umunyeshuri ${username}?`)) {
-          setStudentsList(studentsList.filter(s => s.username !== username));
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setProfilePic(reader.result);
+          };
+          reader.readAsDataURL(file);
         }
       };
 
-      const drivingStudents = studentsList.filter(s => s.trade === 'Driving Laws');
-      const otherStudents = studentsList.filter(s => s.trade !== 'Driving Laws');
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!username.trim()) return;
 
-      // Gucamo amashami ya Timetable ukwayo kugira ngo atavangika
-      const drivingTimetable = timetableList.filter(t => t.trade === 'Driving Laws');
-      const tvetTimetable = timetableList.filter(t => t.trade === 'TVET Technical');
-      const agriTimetable = timetableList.filter(t => t.trade === 'Agriculture');
+        // Auto-generate Student ID bitewe n'ishami
+        const prefix = selectedCategory === 'Driving Laws' ? 'DRV' : selectedCategory === 'Agriculture' ? 'AGR' : 'TVET';
+        const autoStudentId = `${prefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        // Kubika amakuru muri localStorage
+        localStorage.setItem('menya_current_user', username);
+        localStorage.setItem(`menya_student_email_${username}`, email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`);
+        localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
+        localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
+        
+        const existingCount = localStorage.getItem(`menya_login_count_${username}`) || '0';
+        localStorage.setItem(`menya_login_count_${username}`, parseInt(existingCount) + 1);
+
+        if (profilePic) {
+          localStorage.setItem(`menya_avatar_${username}`, profilePic);
+        }
+
+        alert(isSignup ? `Konti yafunguwe neza! Student ID yawe ni ${autoStudentId}` : "Mwinjiye neza!");
+        window.location.href = 'home.html';
+      };
 
       return (
-        <div className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col">
-          {/* Header */}
-          <header className="border-b border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold">
-                ⚡
-              </div>
-              <h1 className="text-base font-bold tracking-tight text-white">
-                CONTROL ROOM <span className="text-red-400 text-xs font-mono">(ADMIN PANEL)</span>
-              </h1>
+        <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold mx-auto text-lg">
+              M
+            </div>
+            <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
+            <p className="text-xs text-neutral-400">
+              {isSignup ? 'Fungura konti nshya y\'umunyeshuri' : 'Injira muri konte yawe yo kwiga'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1">Izina ry'Umunyeshuri (Username)</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Andika izina ryawe..."
+                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              />
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setActiveTab('students')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'students' ? 'bg-emerald-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}
-              >
-                🎓 Abanyeshuri (Students Info)
-              </button>
-              <button
-                onClick={() => setActiveTab('timetable')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-emerald-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}
-              >
-                📅 Timetable & Course Upload
-              </button>
-              <button
-                onClick={() => window.location.href = 'home.html'}
-                className="text-xs text-neutral-400 hover:text-white px-3 py-1.5 bg-neutral-800 rounded-lg"
-              >
-                Subira kuri Home
-              </button>
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 space-y-8">
-            {activeTab === 'students' ? (
-              <div className="space-y-8">
-                <div className="flex justify-between items-center bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
-                  <div>
-                    <h2 className="text-lg font-bold text-white">Amakuru y'Abanyeshuri (Student Profiles)</h2>
-                    <p className="text-xs text-neutral-400">Inkingi zose zashyizwe hamwe n'inzira zo gutandukanya amashami.</p>
-                  </div>
-                  <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/20 font-mono">
-                    Total Registered: {studentsList.length}
-                  </span>
-                </div>
-
-                {/* TEBULO YA 1: DRIVING LAWS STUDENTS */}
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl">
-                  <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                    🚗 Abanyeshuri biga Amategeko y'Omuhanda (Driving Laws)
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs text-neutral-300">
-                      <thead className="bg-neutral-950 text-neutral-400 uppercase font-mono border-b border-neutral-800">
-                        <tr>
-                          <th className="p-3">Izina / Email</th>
-                          <th className="p-3">Ishami (Category)</th>
-                          <th className="p-3">Student ID</th>
-                          <th className="p-3">Uruhare (Role)</th>
-                          <th className="p-3">Ishuro Amaze Kwiga</th>
-                          <th className="p-3 text-right">Ububasha (Actions)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-800">
-                        {drivingStudents.length > 0 ? (
-                          drivingStudents.map((s, idx) => (
-                            <tr key={idx} className="hover:bg-neutral-950/50">
-                              <td className="p-3">
-                                <div className="font-bold text-white">{s.username}</div>
-                                <div className="text-[10px] text-neutral-400">{s.email}</div>
-                              </td>
-                              <td className="p-3 text-emerald-400">{s.trade}</td>
-                              <td className="p-3 font-mono">{s.id}</td>
-                              <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role}</span></td>
-                              <td className="p-3 font-mono text-center">{s.studyCount} times</td>
-                              <td className="p-3 text-right">
-                                <button onClick={() => handleDeleteStudent(s.username)} className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20">
-                                  Siba Konti
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr><td colSpan="6" className="p-4 text-center text-neutral-500">Nta munyeshuri ubonetse muri iri shami.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* TEBULO YA 2: AGRICULTURE & TVET STUDENTS */}
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl">
-                  <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
-                    🌾 Abanyeshuri biga Ubuhinzi n'Ubworozi cyangwa TVET (Agriculture & TVET)
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs text-neutral-300">
-                      <thead className="bg-neutral-950 text-neutral-400 uppercase font-mono border-b border-neutral-800">
-                        <tr>
-                          <th className="p-3">Izina / Email</th>
-                          <th className="p-3">Ishami (Category)</th>
-                          <th className="p-3">Student ID</th>
-                          <th className="p-3">Uruhare (Role)</th>
-                          <th className="p-3">Ishuro Amaze Kwiga</th>
-                          <th className="p-3 text-right">Ububasha (Actions)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-800">
-                        {otherStudents.length > 0 ? (
-                          otherStudents.map((s, idx) => (
-                            <tr key={idx} className="hover:bg-neutral-950/50">
-                              <td className="p-3">
-                                <div className="font-bold text-white">{s.username}</div>
-                                <div className="text-[10px] text-neutral-400">{s.email}</div>
-                              </td>
-                              <td className="p-3 text-amber-400">{s.trade}</td>
-                              <td className="p-3 font-mono">{s.id}</td>
-                              <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role}</span></td>
-                              <td className="p-3 font-mono text-center">{s.studyCount} times</td>
-                              <td className="p-3 text-right">
-                                <button onClick={() => handleDeleteStudent(s.username)} className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20">
-                                  Siba Konti
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr><td colSpan="6" className="p-4 text-center text-neutral-500">Nta munyeshuri ubonetse muri aya mashami.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              /* TIMETABLE & COURSE UPLOAD MANAGEMENT TAB */
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Form yo gukora Upload y'Isomo na Timetable */}
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-1">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-white flex items-center gap-2">
-                      ➕ Ongeraho Isomo & Timetable
-                    </h2>
-                  </div>
-                  <form onSubmit={handleAddTimetable} className="space-y-4">
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami ry'Isomo (Trade)</label>
-                      <select
-                        value={newTrade}
-                        onChange={(e) => setNewTrade(e.target.value)}
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      >
-                        <option value="Driving Laws">Amategeko y'Omuhanda (Driving Laws)</option>
-                        <option value="TVET Technical">TVET Technical</option>
-                        <option value="Agriculture">Ubuhinzi n'Ubworozi (Agriculture)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Izina ry'Isomo (Course Name)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newCourseName}
-                        onChange={(e) => setNewCourseName(e.target.value)}
-                        placeholder="Urugero: Traffic Signals..."
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">YouTube Video Link (URL)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newYoutubeUrl}
-                        onChange={(e) => setNewYoutubeUrl(e.target.value)}
-                        placeholder="https://www.youtube.com/embed/..."
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Umunsi w'Icyumweru (Itangirira ku wa Mbere)</label>
-                      <select
-                        value={newDay}
-                        onChange={(e) => setNewDay(e.target.value)}
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      >
-                        <option value="Ku Mbere (Monday)">Ku Mbere (Monday) - Umunsi wa Mbere</option>
-                        <option value="Ku Kabiri (Tuesday)">Ku Kabiri (Tuesday)</option>
-                        <option value="Ku Gatatu (Wednesday)">Ku Gatatu (Wednesday)</option>
-                        <option value="Ku Kane (Thursday)">Ku Kane (Thursday)</option>
-                        <option value="Ku Gatanu (Friday)">Ku Gatanu (Friday)</option>
-                        <option value="Weekend">Weekend</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Isaha (Time Slot / Schedule Setup)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newTimeSlot}
-                        onChange={(e) => setNewTimeSlot(e.target.value)}
-                        placeholder="Urugero: 09:00 AM - 10:00 AM"
-                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
-                      <span>📥 Upload Isomo & Set Up Timetable</span>
-                    </button>
-                  </form>
-                </div>
-
-                {/* Urutonde rwa Timetable n'Amasomo yashyizweho (Avanguye bitewe n'ishami) */}
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl lg:col-span-2">
-                  <h2 className="text-base font-bold text-white">Gahunda n'Amasomo byashyizweho (Buri Shami ukwaryo)</h2>
-                  
-                  {/* Driving Laws Timetable */}
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase text-emerald-400">🚗 Driving Laws Courses & Schedule</h4>
-                    {drivingTimetable.length > 0 ? (
-                      drivingTimetable.map((item) => (
-                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{item.day}</span>
-                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
-                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
-                          </div>
-                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
-                            🕒 {item.time}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Driving Laws.</p>
-                    )}
-                  </div>
-
-                  {/* TVET Technical Timetable */}
-                  <div className="space-y-3 pt-4 border-t border-neutral-800">
-                    <h4 className="text-xs font-bold uppercase text-amber-400">⚡ TVET Technical Courses & Schedule</h4>
-                    {tvetTimetable.length > 0 ? (
-                      tvetTimetable.map((item) => (
-                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{item.day}</span>
-                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
-                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
-                          </div>
-                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
-                            🕒 {item.time}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri TVET Technical.</p>
-                    )}
-                  </div>
-
-                  {/* Agriculture Timetable */}
-                  <div className="space-y-3 pt-4 border-t border-neutral-800">
-                    <h4 className="text-xs font-bold uppercase text-blue-400">🌾 Agriculture Courses & Schedule</h4>
-                    {agriTimetable.length > 0 ? (
-                      agriTimetable.map((item) => (
-                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{item.day}</span>
-                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
-                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
-                          </div>
-                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
-                            🕒 {item.time}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Agriculture.</p>
-                    )}
-                  </div>
-
-                </div>
+            {isSignup && (
+              <div>
+                <label className="block text-xs text-neutral-400 mb-1">Imeyili (Email Address)</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="urugero: caleb@gmail.com"
+                  className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                />
               </div>
             )}
-          </main>
+
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1">Ijambo ry'Ibanga (Password)</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            {isSignup && (
+              <>
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami ry'Isomo (Trade / Category)</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="Driving Laws">Amategeko y'Omuhanda (Driving Laws)</option>
+                    <option value="TVET Technical">TVET Solar & Technical</option>
+                    <option value="Agriculture">Ubuhinzi n'Ubworozi (Agriculture)</option>
+                  </select>
+                </div>
+
+                <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-[11px] text-neutral-400">
+                  ℹ️ Student ID izakorwa na system ku buryo bwikora.
+                </div>
+
+                <div>
+                  <label className="block text-xs text-neutral-400 mb-1">Ifoto y'Umwirondoro (Profile Picture)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full bg-black border border-neutral-800 p-2 rounded-xl text-xs text-neutral-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500"
+                  />
+                </div>
+              </>
+            )}
+
+            <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
+              {isSignup ? 'Emeza Kwiyandikisha (Sign Up)' : 'Injira (Login)'}
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-neutral-400">
+            {isSignup ? (
+              <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
+            ) : (
+              <p>Uri umunyeshuri mushya? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
+            )}
+          </div>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('control-room-root')).render(<ControlRoomApp />);
+    ReactDOM.createRoot(document.getElementById('index-root')).render(<IndexAuthApp />);
   </script>
 </body>
 </html>
