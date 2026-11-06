@@ -26,54 +26,6 @@
       const [userAvatar, setUserAvatar] = useState('');
       const [todayCourse, setTodayCourse] = useState(null);
 
-      // Amasomo y'icyitegererezo y'ibanze
-      const defaultCourses = [
-        {
-          id: 1,
-          title: "Isomo rya 1: Amategeko y'Omuhanda & Ibimenyetso",
-          category: "Driving Laws",
-          trade: "Driving Laws",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Isomo rya 1 ry'ibanze ry'amategeko y'umuhanda.",
-          quiz: [
-            { q: "Ni uwuhe muvuduku wemewe mu Mujyi wa Kigali?", options: ["40 km/h", "80 km/h", "100 km/h"], answer: 0 }
-          ]
-        },
-        {
-          id: 2,
-          title: "Isomo rya 2: Ibinyabiziga n'Uburyo bitwara mu Nzira",
-          category: "Driving Laws",
-          trade: "Driving Laws",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Isomo rya 2 ry'amategeko y'umuhanda.",
-          quiz: [
-            { q: "Ni iki kigenga ubugenzuzi bw'imodoka?", options: ["Technical Control", "Police", "Driver"], answer: 0 }
-          ]
-        },
-        {
-          id: 3,
-          title: "Isomo rya 1: Off-Grid Solar PV Wiring & TVET",
-          category: "TVET Technical",
-          trade: "TVET Technical",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Isomo rya mbere ry'ibanze rya TVET Solar Installation.",
-          quiz: [
-            { q: "Ni uwuhe mugozi ukoreshwa kuri 12V 1000W inverter?", options: ["4 AWG", "12 AWG", "20 AWG"], answer: 0 }
-          ]
-        },
-        {
-          id: 4,
-          title: "Isomo rya 1: Ubuhinzi n'Ubworozi bwa Kijyambere",
-          category: "Agriculture",
-          trade: "Agriculture",
-          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Isomo rya mbere ry'ibanze ry'ubuhinzi n'ubworozi.",
-          quiz: [
-            { q: "Ni ubuhe buryo bwiza bwo kuhira mu gihe cy'izuba?", options: ["Kuhira ku mirongo (Drip)", "Kwitera amazi yose", "Kureka imvura"], answer: 0 }
-          ]
-        }
-      ];
-
       const [isTimerRunning, setIsTimerRunning] = useState(false);
       const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 Min
       const [mode, setMode] = useState('study'); 
@@ -100,7 +52,7 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Guhitamo isomo rijyanye n'ishami rye ndetse n'incuro yaje (Attendance Progress)
+      // Gusoma amasomo nyayo muri database (menya_admin_timetable) no kuyihuza n'Attendance y'umunyeshuri
       useEffect(() => {
         const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
         if (savedAvatar) {
@@ -109,24 +61,35 @@
           setUserAvatar(`https://ui-avatars.com/api/?name=${currentUser}&background=0D9488&color=fff`);
         }
 
+        // Guhamagara database y'amasomo yashyizweho na Admin
         const adminTimetableJson = localStorage.getItem('menya_admin_timetable');
-        let currentCoursesList = defaultCourses;
+        let currentCoursesList = [];
         
         if (adminTimetableJson) {
           try {
-            const parsed = JSON.parse(adminTimetableJson);
-            if (parsed.length > 0) currentCoursesList = parsed;
+            currentCoursesList = JSON.parse(adminTimetableJson);
           } catch(e) {}
         }
 
-        // Filter amasomo y'iri shami ryonyine
-        const studentCourses = currentCoursesList.filter(c => (c.category === studentCategory || c.trade === studentCategory));
+        // Niba nta masomo Admin yigeze ashyiramo, shyiramo ay'ibanze y'icyitegererezo
+        if (currentCoursesList.length === 0) {
+          currentCoursesList = [
+            { id: 1, course: "Isomo rya 1: Amategeko y'Ibanze", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'amategeko y'umuhanda.", quiz: [{ q: "Umuvuduku wemewe?", options: ["40 km/h", "80 km/h"], answer: 0 }] },
+            { id: 2, course: "Isomo rya 2: Ibimenyetso byo mu Nzira", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya kabiri ry'amategeko.", quiz: [{ q: "Zebra crossing ni iki?", options: ["Ahanyurwa n'abanyamaguru", "imodoka"], answer: 0 }] },
+            { id: 3, course: "Isomo rya 1: TVET Solar Wiring", trade: "TVET Technical", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere rya TVET.", quiz: [{ q: "Mugozi ki?", options: ["4 AWG", "20 AWG"], answer: 0 }] },
+            { id: 4, course: "Isomo rya 1: Ubuhinzi bwa Kijyambere", trade: "Agriculture", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'ubuhinzi.", quiz: [{ q: "Uburyo bwo kuhira?", options: ["Drip irrigation", "Imvura"], answer: 0 }] }
+          ];
+        }
+
+        // Gufata gusa amasomo ajyanye n'ishami ry'umunyeshuri (Trade)
+        const studentCourses = currentCoursesList.filter(c => c.trade === studentCategory || c.category === studentCategory);
         
         if (studentCourses.length > 0) {
-          // Niba yaje bwa 3, afata isomo rya 3 (Index: visitCount - 1), cyangwa isomo rya nyuma rihari niba yarazirengeje
+          // Bitewe n'incuro yaje (Attendance), duhitamo isomo riri muri urwo rutonde
           let courseIndex = (visitCount - 1) % studentCourses.length;
           setTodayCourse(studentCourses[courseIndex]);
         } else {
+          // Niba nta cyo yashyizemo muri iri shami, dufata irya mbere muri rusange
           setTodayCourse(currentCoursesList[0]);
         }
       }, [currentUser, studentCategory, visitCount]);
@@ -251,7 +214,7 @@
                   <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                     <div>
                       <span className="text-xs text-emerald-400 font-mono uppercase">
-                        📚 Isomo rijyanye n'Attendance yawe (#{visitCount})
+                        📚 Isomo rijyanye n'Attendance yawe (#{visitCount}) - {todayCourse.trade || studentCategory}
                       </span>
                       <div className="text-xl font-bold font-mono text-white">
                         {mode === 'study' ? (
@@ -277,16 +240,16 @@
                       onClick={handleStartLesson} 
                       className="relative aspect-video bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center cursor-pointer"
                     >
-                      {todayCourse.embedUrl ? (
+                      {todayCourse.embedUrl || todayCourse.youtubeUrl ? (
                         <iframe 
-                          src={todayCourse.embedUrl} 
+                          src={todayCourse.embedUrl || todayCourse.youtubeUrl} 
                           className="w-full h-full border-0" 
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                           allowFullScreen
                         ></iframe>
                       ) : (
                         <div className="text-xs text-neutral-400 p-4 text-center">
-                          Nta video y'isomo yashyizweho muri iri shami.
+                          Nta video y'isomo yashyizweho muri iri shami. Jya muri Control Room wongereho isomo.
                         </div>
                       )}
                     </div>
@@ -297,22 +260,26 @@
                         <span className="text-xs text-neutral-400 font-mono">Auto-submit niba timer irangiye</span>
                       </div>
 
-                      {todayCourse.quiz && todayCourse.quiz.map((qObj, idx) => (
-                        <div key={idx} className="space-y-2">
-                          <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {qObj.options.map((opt, oIdx) => (
-                              <button 
-                                key={oIdx} 
-                                onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} 
-                                className={`p-2.5 rounded-lg text-xs text-left border transition-all ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white font-bold' : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:border-neutral-700'}`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
+                      {todayCourse.quiz && todayCourse.quiz.length > 0 ? (
+                        todayCourse.quiz.map((qObj, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
+                            <div className="grid grid-cols-1 gap-2">
+                              {qObj.options.map((opt, oIdx) => (
+                                <button 
+                                  key={oIdx} 
+                                  onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} 
+                                  className={`p-2.5 rounded-lg text-xs text-left border transition-all ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white font-bold' : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:border-neutral-700'}`}
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-xs text-neutral-400">Ntamibazo ya Quiz yashyizwe kuri iri somo. Ushobora gukora Submit.</p>
+                      )}
 
                       <div className="pt-4 border-t border-neutral-800 flex justify-end">
                         <button 
@@ -326,9 +293,9 @@
                   )}
 
                   <div>
-                    <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">{todayCourse.category || todayCourse.trade}</span>
-                    <h2 className="text-base font-bold text-white mt-1">{todayCourse.title}</h2>
-                    <p className="text-xs text-neutral-400 mt-1">{todayCourse.description}</p>
+                    <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">{todayCourse.trade || todayCourse.category}</span>
+                    <h2 className="text-base font-bold text-white mt-1">{todayCourse.course || todayCourse.title}</h2>
+                    <p className="text-xs text-neutral-400 mt-1">{todayCourse.description || "Isomo rishya ryashyizweho na Admin."}</p>
                   </div>
                 </div>
               ) : (
