@@ -68,26 +68,22 @@
           } catch(e) {}
         }
 
-        if (currentCoursesList.length === 0) {
-          currentCoursesList = [
-            { id: 1, course: "Isomo rya 1", trade: "Driving Laws", category: "Driving Laws", embedUrl: "https://www.youtube.com/embed/b-CuMCD-eGs", description: "Isomo rya mbere.", quiz: [] }
-          ];
-        }
-
+        // Gufata GUSA amasomo ahuye n'ishami ry'umunyeshuri (nka Agriculture, Driving Laws, cyangwa TVET)
         const studentCourses = currentCoursesList.filter(c => {
-          const t = (c.trade || c.category || '').toLowerCase();
-          const s = studentCategory.toLowerCase();
-          return t.includes(s) || s.includes(t);
+          const courseTrade = (c.trade || c.category || '').toLowerCase();
+          const studentTrade = studentCategory.toLowerCase();
+          return courseTrade.includes(studentTrade) || studentTrade.includes(courseTrade);
         });
         
         if (studentCourses.length > 0) {
+          // Guhitamo video ijyanye n'incuro umunyeshuri agezeho (Attendance / visitCount)
           let courseIndex = (visitCount - 1) < studentCourses.length 
             ? (visitCount - 1) 
             : (studentCourses.length - 1);
           
           setTodayCourse(studentCourses[courseIndex]);
         } else {
-          setTodayCourse(currentCoursesList[0]);
+          setTodayCourse(null); // Nta somo rirashyirwa muri iri shami na Admin
         }
       }, [currentUser, studentCategory, visitCount]);
 
@@ -194,7 +190,7 @@
                 />
                 <div className="text-xs">
                   <strong className="text-emerald-400 block">{currentUser}</strong>
-                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum} | Attendance: #{visitCount}</span>
+                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum} | Ishami: {studentCategory} | Attendance: #{visitCount}</span>
                 </div>
               </div>
 
@@ -211,7 +207,7 @@
                   <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                     <div>
                       <span className="text-xs text-emerald-400 font-mono uppercase">
-                        📚 Isomo ry'Attendance yawe (#{visitCount}) - {todayCourse.trade || studentCategory}
+                        📚 Isomo ry'Attendance yawe (#{visitCount}) - Ishami: {todayCourse.trade || studentCategory}
                       </span>
                       <div className="text-xl font-bold font-mono text-white">
                         {mode === 'study' ? (
@@ -296,8 +292,9 @@
                   </div>
                 </div>
               ) : (
-                <div className="p-8 text-center text-neutral-500 bg-neutral-900 border border-neutral-800 rounded-2xl">
-                  Nta somo riraboneka muri iri shami. Jya muri Control Room wongereho isomo.
+                <div className="p-8 text-center text-neutral-500 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-2">
+                  <p className="text-sm font-bold text-white">Nta somo riraboneka muri iri shami ({studentCategory}) kuri Attendance #{visitCount}.</p>
+                  <p className="text-xs">Jya muri Control Room wongereho amasomo y'iri shami kugira ngo abanyeshuri bayabone.</p>
                 </div>
               )}
             </div>
