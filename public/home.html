@@ -20,7 +20,7 @@
       const studentCategory = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
       const studentIdNum = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026';
       
-      // Umubare w'incuro yaje (Attendance / Visit count) kugira ngo tumuhe isomo rijyanye n'igihe agezeho
+      // Umubare w'incuro yaje (Attendance / Visit count)
       const visitCount = parseInt(localStorage.getItem(`menya_visit_count_${currentUser}`) || '1');
 
       const [userAvatar, setUserAvatar] = useState('');
@@ -52,7 +52,7 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Gusoma amasomo nyayo muri database (menya_admin_timetable) no kuyihuza n'Attendance y'umunyeshuri
+      // Gusoma amasomo muri database no kuyihuza n'Attendance y'umunyeshuri
       useEffect(() => {
         const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
         if (savedAvatar) {
@@ -61,7 +61,6 @@
           setUserAvatar(`https://ui-avatars.com/api/?name=${currentUser}&background=0D9488&color=fff`);
         }
 
-        // Guhamagara database y'amasomo yashyizweho na Admin
         const adminTimetableJson = localStorage.getItem('menya_admin_timetable');
         let currentCoursesList = [];
         
@@ -71,25 +70,28 @@
           } catch(e) {}
         }
 
-        // Niba nta masomo Admin yigeze ashyiramo, shyiramo ay'ibanze y'icyitegererezo
+        // Niba nta masomo Admin yashyizemo, gukoresha ay'ibanze
         if (currentCoursesList.length === 0) {
           currentCoursesList = [
-            { id: 1, course: "Isomo rya 1: Amategeko y'Ibanze", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'amategeko y'umuhanda.", quiz: [{ q: "Umuvuduku wemewe?", options: ["40 km/h", "80 km/h"], answer: 0 }] },
-            { id: 2, course: "Isomo rya 2: Ibimenyetso byo mu Nzira", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya kabiri ry'amategeko.", quiz: [{ q: "Zebra crossing ni iki?", options: ["Ahanyurwa n'abanyamaguru", "imodoka"], answer: 0 }] },
-            { id: 3, course: "Isomo rya 1: TVET Solar Wiring", trade: "TVET Technical", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere rya TVET.", quiz: [{ q: "Mugozi ki?", options: ["4 AWG", "20 AWG"], answer: 0 }] },
-            { id: 4, course: "Isomo rya 1: Ubuhinzi bwa Kijyambere", trade: "Agriculture", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'ubuhinzi.", quiz: [{ q: "Uburyo bwo kuhira?", options: ["Drip irrigation", "Imvura"], answer: 0 }] }
+            { id: 1, course: "Isomo rya 1: Amategeko y'Ibanze", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'amategeko y'umuhanda.", quiz: [{ q: "Umuvuduku wemewe mu mujyi?", options: ["40 km/h", "80 km/h"], answer: 0 }] },
+            { id: 2, course: "Isomo rya 2: Ibimenyetso byo mu Nzira", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya kabiri ry'amategeko.", quiz: [{ q: "Zebra crossing ni iki?", options: ["Ahanyurwa n'abanyamaguru", "Ahabikwa imodoka"], answer: 0 }] },
+            { id: 3, course: "Isomo rya 3: Ibiranga Umuhanda n'Ibyapa", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya gatatu ry'amategeko.", quiz: [{ q: "Icyapa gipima ibiro kikubwira iki?", options: ["Uremere bwegukira ku binyabiziga", "Umuvuduku"], answer: 0 }] },
+            { id: 4, course: "Isomo rya 1: TVET Solar Wiring", trade: "TVET Technical", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere rya TVET.", quiz: [{ q: "Umugozi wo kumanura amashanyarazi?", options: ["4 AWG", "20 AWG"], answer: 0 }] },
+            { id: 5, course: "Isomo rya 1: Ubuhinzi bwa Kijyambere", trade: "Agriculture", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'ubuhinzi.", quiz: [{ q: "Uburyo bwo kuhira ku gipimo nyacyo?", options: ["Drip irrigation", "Imvura no gukanya"], answer: 0 }] }
           ];
         }
 
-        // Gufata gusa amasomo ajyanye n'ishami ry'umunyeshuri (Trade)
+        // Gufata amasomo y'ishami ryo kwiga ryo muri uwo mwanya
         const studentCourses = currentCoursesList.filter(c => c.trade === studentCategory || c.category === studentCategory);
         
         if (studentCourses.length > 0) {
-          // Bitewe n'incuro yaje (Attendance), duhitamo isomo riri muri urwo rutonde
-          let courseIndex = (visitCount - 1) % studentCourses.length;
+          // Logic Nshya: Attendance #1 -> Index 0, Attendance #3 -> Index 2
+          let courseIndex = (visitCount - 1) < studentCourses.length 
+            ? (visitCount - 1) 
+            : (studentCourses.length - 1);
+          
           setTodayCourse(studentCourses[courseIndex]);
         } else {
-          // Niba nta cyo yashyizemo muri iri shami, dufata irya mbere muri rusange
           setTodayCourse(currentCoursesList[0]);
         }
       }, [currentUser, studentCategory, visitCount]);
@@ -167,9 +169,9 @@
         setIsAiThinking(true);
 
         setTimeout(() => {
-          let aiReply = "Menya AI: Isomo ryawe rigezweho rigena ko witondera amabwiriza.";
+          let aiReply = `Menya AI: Ku kibazo cyawe cyo muri ${studentCategory}, witondere gukurikiza amabwiriza y'isomo.`;
           if (userText.toLowerCase().includes('kigali') || userText.toLowerCase().includes('muvuduku')) {
-            aiReply = "Menya AI: Umuvuduku wemewe mu Mujyi wa Kigali ni 40 km/h.";
+            aiReply = "Menya AI: Umuvuduku wemewe mu Mujyi wa Kigali ni 40 km/h ku binyabiziga n'amapikipiki muri rusange.";
           }
           setMessages(prev => [...prev, { role: 'assistant', text: aiReply }]);
           setIsAiThinking(false);
@@ -214,7 +216,7 @@
                   <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                     <div>
                       <span className="text-xs text-emerald-400 font-mono uppercase">
-                        📚 Isomo rijyanye n'Attendance yawe (#{visitCount}) - {todayCourse.trade || studentCategory}
+                        📚 Isomo ry'Attendance yawe (#{visitCount}) - {todayCourse.trade || studentCategory}
                       </span>
                       <div className="text-xl font-bold font-mono text-white">
                         {mode === 'study' ? (
