@@ -68,18 +68,16 @@
           } catch(e) {}
         }
 
-        // Niba nta masomo arimo, dukoresha byibura isomo ryawe rya gutwara
         if (currentCoursesList.length === 0) {
           currentCoursesList = [
-            { id: 1, course: "gutwara", trade: "Driving Laws", category: "Amategeko y'Omuhanda (Driving Laws)", embedUrl: "https://www.youtube.com/embed/b-CuMCD-eGs", description: "Isomo rya mbere rya gutwara.", quiz: [] }
+            { id: 1, course: "Isomo rya 1", trade: "Driving Laws", category: "Driving Laws", embedUrl: "https://www.youtube.com/embed/b-CuMCD-eGs", description: "Isomo rya mbere.", quiz: [] }
           ];
         }
 
-        // Gushakisha amasomo ajyanye n'ishami ry'umunyeshuri (twongeramo uburyo bose bahura)
         const studentCourses = currentCoursesList.filter(c => {
           const t = (c.trade || c.category || '').toLowerCase();
           const s = studentCategory.toLowerCase();
-          return t.includes(s) || s.includes(t) || t.includes('driving') || s.includes('driving');
+          return t.includes(s) || s.includes(t);
         });
         
         if (studentCourses.length > 0) {
