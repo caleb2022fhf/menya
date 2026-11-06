@@ -20,29 +20,41 @@
       const studentCategory = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
       const studentIdNum = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026';
       
+      // Umubare w'incuro yaje (Attendance / Visit count) kugira ngo tumuhe isomo rijyanye n'igihe agezeho
+      const visitCount = parseInt(localStorage.getItem(`menya_visit_count_${currentUser}`) || '1');
+
       const [userAvatar, setUserAvatar] = useState('');
       const [todayCourse, setTodayCourse] = useState(null);
 
-      // Amasomo y'ibanze y'icyitegererezo
+      // Amasomo y'icyitegererezo y'ibanze
       const defaultCourses = [
         {
           id: 1,
           title: "Isomo rya 1: Amategeko y'Omuhanda & Ibimenyetso",
           category: "Driving Laws",
           trade: "Driving Laws",
-          dayName: "Isomo rya mbere",
           embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: "Isomo rya mbere ry'ibanze ry'amategeko y'umuhanda.",
+          description: "Isomo rya 1 ry'ibanze ry'amategeko y'umuhanda.",
           quiz: [
             { q: "Ni uwuhe muvuduku wemewe mu Mujyi wa Kigali?", options: ["40 km/h", "80 km/h", "100 km/h"], answer: 0 }
           ]
         },
         {
           id: 2,
+          title: "Isomo rya 2: Ibinyabiziga n'Uburyo bitwara mu Nzira",
+          category: "Driving Laws",
+          trade: "Driving Laws",
+          embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          description: "Isomo rya 2 ry'amategeko y'umuhanda.",
+          quiz: [
+            { q: "Ni iki kigenga ubugenzuzi bw'imodoka?", options: ["Technical Control", "Police", "Driver"], answer: 0 }
+          ]
+        },
+        {
+          id: 3,
           title: "Isomo rya 1: Off-Grid Solar PV Wiring & TVET",
           category: "TVET Technical",
           trade: "TVET Technical",
-          dayName: "Isomo rya mbere",
           embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
           description: "Isomo rya mbere ry'ibanze rya TVET Solar Installation.",
           quiz: [
@@ -50,11 +62,10 @@
           ]
         },
         {
-          id: 3,
+          id: 4,
           title: "Isomo rya 1: Ubuhinzi n'Ubworozi bwa Kijyambere",
           category: "Agriculture",
           trade: "Agriculture",
-          dayName: "Isomo rya mbere",
           embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
           description: "Isomo rya mbere ry'ibanze ry'ubuhinzi n'ubworozi.",
           quiz: [
@@ -63,25 +74,21 @@
         }
       ];
 
-      // Timer states
       const [isTimerRunning, setIsTimerRunning] = useState(false);
       const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 Min
-      const [mode, setMode] = useState('study'); // 'study' cyangwa 'quiz'
+      const [mode, setMode] = useState('study'); 
       const [selectedAnswers, setSelectedAnswers] = useState({});
 
-      // Admin Modal States (Ctrl + Shift + C)
       const [showAdminModal, setShowAdminModal] = useState(false);
       const [passwordInput, setPasswordInput] = useState('');
       const [authError, setAuthError] = useState(false);
 
-      // AI Chat States
       const [chatInput, setChatInput] = useState('');
       const [isAiThinking, setIsAiThinking] = useState(false);
       const [messages, setMessages] = useState([
         { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'isomo ryawe hano.` }
       ]);
 
-      // Shortcut Ctrl + Shift + C
       useEffect(() => {
         const handleKeyDown = (e) => {
           if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
@@ -93,7 +100,7 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Guhitamo isomo rya mbere riri muri database ryerekeranye n'ibyo yiga
+      // Guhitamo isomo rijyanye n'ishami rye ndetse n'incuro yaje (Attendance Progress)
       useEffect(() => {
         const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
         if (savedAvatar) {
@@ -112,15 +119,18 @@
           } catch(e) {}
         }
 
-        // Guhuza ishami ry'umunyeshuri (studentCategory) n'amasomo yayo, 
-        // hany functors zigahitamo ISOMO RYA MBERE risanzwe muri database y'iryo shami rye gusa.
+        // Filter amasomo y'iri shami ryonyine
         const studentCourses = currentCoursesList.filter(c => (c.category === studentCategory || c.trade === studentCategory));
         
-        let courseToStudy = studentCourses.length > 0 ? studentCourses[0] : currentCoursesList[0];
-        setTodayCourse(courseToStudy);
-      }, [currentUser, studentCategory]);
+        if (studentCourses.length > 0) {
+          // Niba yaje bwa 3, afata isomo rya 3 (Index: visitCount - 1), cyangwa isomo rya nyuma rihari niba yarazirengeje
+          let courseIndex = (visitCount - 1) % studentCourses.length;
+          setTodayCourse(studentCourses[courseIndex]);
+        } else {
+          setTodayCourse(currentCoursesList[0]);
+        }
+      }, [currentUser, studentCategory, visitCount]);
 
-      // Automated Timer Logic
       useEffect(() => {
         let timer = null;
         if (isTimerRunning) {
@@ -194,7 +204,7 @@
         setIsAiThinking(true);
 
         setTimeout(() => {
-          let aiReply = "Menya AI: Isomo ryawe rya mbere rigena ko witondera amabwiriza y'ibanze.";
+          let aiReply = "Menya AI: Isomo ryawe rigezweho rigena ko witondera amabwiriza.";
           if (userText.toLowerCase().includes('kigali') || userText.toLowerCase().includes('muvuduku')) {
             aiReply = "Menya AI: Umuvuduku wemewe mu Mujyi wa Kigali ni 40 km/h.";
           }
@@ -224,7 +234,7 @@
                 />
                 <div className="text-xs">
                   <strong className="text-emerald-400 block">{currentUser}</strong>
-                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum}</span>
+                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum} | Attendance: #{visitCount}</span>
                 </div>
               </div>
 
@@ -241,7 +251,7 @@
                   <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
                     <div>
                       <span className="text-xs text-emerald-400 font-mono uppercase">
-                        📚 Isomo rya Mbere ry'Ishami ryawe (First Lesson)
+                        📚 Isomo rijyanye n'Attendance yawe (#{visitCount})
                       </span>
                       <div className="text-xl font-bold font-mono text-white">
                         {mode === 'study' ? (
@@ -283,7 +293,7 @@
                   ) : (
                     <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
                       <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-emerald-400">Quiz y'Isomo rya Mbere (Iminota 10)</h3>
+                        <h3 className="text-sm font-bold text-emerald-400">Quiz y'Isomo (Iminota 10)</h3>
                         <span className="text-xs text-neutral-400 font-mono">Auto-submit niba timer irangiye</span>
                       </div>
 
