@@ -19,14 +19,17 @@
       const [activeTab, setActiveTab] = useState('students');
       const [studentsList, setStudentsList] = useState([]);
       
+      // Timetable & Course Upload Management State
       const [timetableList, setTimetableList] = useState([
-        { id: 1, course: "Amategeko y'Omuhanda", day: "Ku Mbere (Monday)", time: "09:00 AM" },
-        { id: 2, course: "Off-Grid Solar PV Wiring", day: "Ku Kabiri (Tuesday)", time: "02:00 PM" }
+        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Ku Mbere (Monday)", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
+        { id: 2, course: "Off-Grid Solar PV Wiring", trade: "TVET Technical", day: "Ku Kabiri (Tuesday)", time: "02:00 PM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
       ]);
 
       const [newCourseName, setNewCourseName] = useState('');
-      const [newDay, setNewDay] = useState('Monday');
+      const [newTrade, setNewTrade] = useState('Driving Laws');
+      const [newDay, setNewDay] = useState('Ku Mbere (Monday)');
       const [newTimeSlot, setNewTimeSlot] = useState('');
+      const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
 
       useEffect(() => {
         const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
@@ -52,17 +55,25 @@
 
       const handleAddTimetable = (e) => {
         e.preventDefault();
-        if (!newCourseName || !newTimeSlot) return;
+        if (!newCourseName || !newTimeSlot || !newYoutubeUrl) return;
+        
         const newItem = {
           id: timetableList.length + 1,
           course: newCourseName,
+          trade: newTrade,
           day: newDay,
-          time: newTimeSlot
+          time: newTimeSlot,
+          youtubeUrl: newYoutubeUrl
         };
-        setTimetableList([...timetableList, newItem]);
+
+        const updatedList = [...timetableList, newItem];
+        setTimetableList(updatedList);
+        localStorage.setItem('menya_admin_timetable', JSON.stringify(updatedList));
+
         setNewCourseName('');
         setNewTimeSlot('');
-        alert("Timetable yongewe neza!");
+        setNewYoutubeUrl('');
+        alert("Isomo na Timetable byongewe neza mu ishami ryabyo!");
       };
 
       const handleDeleteStudent = (username) => {
@@ -73,6 +84,11 @@
 
       const drivingStudents = studentsList.filter(s => s.trade === 'Driving Laws');
       const otherStudents = studentsList.filter(s => s.trade !== 'Driving Laws');
+
+      // Gucamo amashami ya Timetable ukwayo kugira ngo atavangika
+      const drivingTimetable = timetableList.filter(t => t.trade === 'Driving Laws');
+      const tvetTimetable = timetableList.filter(t => t.trade === 'TVET Technical');
+      const agriTimetable = timetableList.filter(t => t.trade === 'Agriculture');
 
       return (
         <div className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col">
@@ -98,7 +114,7 @@
                 onClick={() => setActiveTab('timetable')}
                 className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-emerald-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}
               >
-                📅 Timetable Management
+                📅 Timetable & Course Upload
               </button>
               <button
                 onClick={() => window.location.href = 'home.html'}
@@ -213,41 +229,71 @@
 
               </div>
             ) : (
-              /* TIMETABLE TAB */
+              /* TIMETABLE & COURSE UPLOAD MANAGEMENT TAB */
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Form yo gukora Upload y'Isomo na Timetable */}
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-1">
-                  <h2 className="text-base font-bold text-white">Gushyiraho Timetable Nshya</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      ➕ Ongeraho Isomo & Timetable
+                    </h2>
+                  </div>
                   <form onSubmit={handleAddTimetable} className="space-y-4">
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Izina ry'Isomo</label>
+                      <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami ry'Isomo (Trade)</label>
+                      <select
+                        value={newTrade}
+                        onChange={(e) => setNewTrade(e.target.value)}
+                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
+                      >
+                        <option value="Driving Laws">Amategeko y'Omuhanda (Driving Laws)</option>
+                        <option value="TVET Technical">TVET Technical</option>
+                        <option value="Agriculture">Ubuhinzi n'Ubworozi (Agriculture)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Izina ry'Isomo (Course Name)</label>
                       <input
                         type="text"
                         required
                         value={newCourseName}
                         onChange={(e) => setNewCourseName(e.target.value)}
-                        placeholder="Urugero: Traffic Code..."
+                        placeholder="Urugero: Traffic Signals..."
                         className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Umunsi w'icyumweru</label>
+                      <label className="block text-xs text-neutral-400 mb-1">YouTube Video Link (URL)</label>
+                      <input
+                        type="text"
+                        required
+                        value={newYoutubeUrl}
+                        onChange={(e) => setNewYoutubeUrl(e.target.value)}
+                        placeholder="https://www.youtube.com/embed/..."
+                        className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Umunsi w'Icyumweru (Itangirira ku wa Mbere)</label>
                       <select
                         value={newDay}
                         onChange={(e) => setNewDay(e.target.value)}
                         className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
                       >
-                        <option value="Monday">Ku Mbere (Monday)</option>
-                        <option value="Tuesday">Ku Kabiri (Tuesday)</option>
-                        <option value="Wednesday">Ku Gatatu (Wednesday)</option>
-                        <option value="Thursday">Ku Kane (Thursday)</option>
-                        <option value="Friday">Ku Gatanu (Friday)</option>
+                        <option value="Ku Mbere (Monday)">Ku Mbere (Monday) - Umunsi wa Mbere</option>
+                        <option value="Ku Kabiri (Tuesday)">Ku Kabiri (Tuesday)</option>
+                        <option value="Ku Gatatu (Wednesday)">Ku Gatatu (Wednesday)</option>
+                        <option value="Ku Kane (Thursday)">Ku Kane (Thursday)</option>
+                        <option value="Ku Gatanu (Friday)">Ku Gatanu (Friday)</option>
                         <option value="Weekend">Weekend</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Isaha (Time Slot)</label>
+                      <label className="block text-xs text-neutral-400 mb-1">Isaha (Time Slot / Schedule Setup)</label>
                       <input
                         type="text"
                         required
@@ -258,27 +304,79 @@
                       />
                     </div>
 
-                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold">
-                      Emeza Timetable
+                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+                      <span>📥 Upload Isomo & Set Up Timetable</span>
                     </button>
                   </form>
                 </div>
 
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-2">
-                  <h2 className="text-base font-bold text-white">Gahunda z'Amasomo (Timetable Schedule)</h2>
+                {/* Urutonde rwa Timetable n'Amasomo yashyizweho (Avanguye bitewe n'ishami) */}
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl lg:col-span-2">
+                  <h2 className="text-base font-bold text-white">Gahunda n'Amasomo byashyizweho (Buri Shami ukwaryo)</h2>
+                  
+                  {/* Driving Laws Timetable */}
                   <div className="space-y-3">
-                    {timetableList.map((item) => (
-                      <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{item.day}</span>
-                          <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
+                    <h4 className="text-xs font-bold uppercase text-emerald-400">🚗 Driving Laws Courses & Schedule</h4>
+                    {drivingTimetable.length > 0 ? (
+                      drivingTimetable.map((item) => (
+                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{item.day}</span>
+                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
+                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
+                          </div>
+                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
+                            🕒 {item.time}
+                          </span>
                         </div>
-                        <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
-                          🕒 {item.time}
-                        </span>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Driving Laws.</p>
+                    )}
                   </div>
+
+                  {/* TVET Technical Timetable */}
+                  <div className="space-y-3 pt-4 border-t border-neutral-800">
+                    <h4 className="text-xs font-bold uppercase text-amber-400">⚡ TVET Technical Courses & Schedule</h4>
+                    {tvetTimetable.length > 0 ? (
+                      tvetTimetable.map((item) => (
+                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{item.day}</span>
+                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
+                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
+                          </div>
+                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
+                            🕒 {item.time}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri TVET Technical.</p>
+                    )}
+                  </div>
+
+                  {/* Agriculture Timetable */}
+                  <div className="space-y-3 pt-4 border-t border-neutral-800">
+                    <h4 className="text-xs font-bold uppercase text-blue-400">🌾 Agriculture Courses & Schedule</h4>
+                    {agriTimetable.length > 0 ? (
+                      agriTimetable.map((item) => (
+                        <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{item.day}</span>
+                            <h4 className="text-sm font-bold text-white mt-1">{item.course}</h4>
+                            <span className="text-[10px] text-neutral-400 truncate block max-w-xs">Link: {item.youtubeUrl}</span>
+                          </div>
+                          <span className="text-xs font-mono text-neutral-400 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
+                            🕒 {item.time}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Agriculture.</p>
+                    )}
+                  </div>
+
                 </div>
               </div>
             )}
