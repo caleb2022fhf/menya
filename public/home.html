@@ -20,14 +20,13 @@
       const studentCategory = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
       const studentIdNum = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026';
       
-      // Umubare w'incuro yaje (Attendance / Visit count)
       const visitCount = parseInt(localStorage.getItem(`menya_visit_count_${currentUser}`) || '1');
 
       const [userAvatar, setUserAvatar] = useState('');
       const [todayCourse, setTodayCourse] = useState(null);
 
       const [isTimerRunning, setIsTimerRunning] = useState(false);
-      const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 Min
+      const [timeLeft, setTimeLeft] = useState(25 * 60); 
       const [mode, setMode] = useState('study'); 
       const [selectedAnswers, setSelectedAnswers] = useState({});
 
@@ -52,7 +51,6 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // Gusoma amasomo muri database no kuyihuza n'Attendance y'umunyeshuri
       useEffect(() => {
         const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
         if (savedAvatar) {
@@ -70,22 +68,21 @@
           } catch(e) {}
         }
 
-        // Niba nta masomo Admin yashyizemo, gukoresha ay'ibanze
+        // Niba nta masomo arimo, dukoresha byibura isomo ryawe rya gutwara
         if (currentCoursesList.length === 0) {
           currentCoursesList = [
-            { id: 1, course: "Isomo rya 1: Amategeko y'Ibanze", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'amategeko y'umuhanda.", quiz: [{ q: "Umuvuduku wemewe mu mujyi?", options: ["40 km/h", "80 km/h"], answer: 0 }] },
-            { id: 2, course: "Isomo rya 2: Ibimenyetso byo mu Nzira", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya kabiri ry'amategeko.", quiz: [{ q: "Zebra crossing ni iki?", options: ["Ahanyurwa n'abanyamaguru", "Ahabikwa imodoka"], answer: 0 }] },
-            { id: 3, course: "Isomo rya 3: Ibiranga Umuhanda n'Ibyapa", trade: "Driving Laws", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya gatatu ry'amategeko.", quiz: [{ q: "Icyapa gipima ibiro kikubwira iki?", options: ["Uremere bwegukira ku binyabiziga", "Umuvuduku"], answer: 0 }] },
-            { id: 4, course: "Isomo rya 1: TVET Solar Wiring", trade: "TVET Technical", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere rya TVET.", quiz: [{ q: "Umugozi wo kumanura amashanyarazi?", options: ["4 AWG", "20 AWG"], answer: 0 }] },
-            { id: 5, course: "Isomo rya 1: Ubuhinzi bwa Kijyambere", trade: "Agriculture", embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", description: "Isomo rya mbere ry'ubuhinzi.", quiz: [{ q: "Uburyo bwo kuhira ku gipimo nyacyo?", options: ["Drip irrigation", "Imvura no gukanya"], answer: 0 }] }
+            { id: 1, course: "gutwara", trade: "Driving Laws", category: "Amategeko y'Omuhanda (Driving Laws)", embedUrl: "https://www.youtube.com/embed/b-CuMCD-eGs", description: "Isomo rya mbere rya gutwara.", quiz: [] }
           ];
         }
 
-        // Gufata amasomo y'ishami ryo kwiga ryo muri uwo mwanya
-        const studentCourses = currentCoursesList.filter(c => c.trade === studentCategory || c.category === studentCategory);
+        // Gushakisha amasomo ajyanye n'ishami ry'umunyeshuri (twongeramo uburyo bose bahura)
+        const studentCourses = currentCoursesList.filter(c => {
+          const t = (c.trade || c.category || '').toLowerCase();
+          const s = studentCategory.toLowerCase();
+          return t.includes(s) || s.includes(t) || t.includes('driving') || s.includes('driving');
+        });
         
         if (studentCourses.length > 0) {
-          // Logic Nshya: Attendance #1 -> Index 0, Attendance #3 -> Index 2
           let courseIndex = (visitCount - 1) < studentCourses.length 
             ? (visitCount - 1) 
             : (studentCourses.length - 1);
