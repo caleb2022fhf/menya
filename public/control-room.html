@@ -20,7 +20,7 @@
       const [studentsList, setStudentsList] = useState([]);
       
       const [timetableList, setTimetableList] = useState([
-        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Isomo rya 1", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
+        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Isomo rya 1", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/b-CuMCD-eGs" }
       ]);
 
       const [newCourseName, setNewCourseName] = useState('');
@@ -30,7 +30,6 @@
       const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
 
       useEffect(() => {
-        // Gusoma abanyeshuri bose babitswe muri menya_all_students kugira ngo batazatakara
         let allStoredStudents = [];
         try {
           const savedAll = localStorage.getItem('menya_all_students');
@@ -244,7 +243,6 @@
                     </table>
                   </div>
                 </div>
-
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -406,7 +404,6 @@
                       <p className="text-xs text-neutral-500 italic">Nta isomo riri muri Agriculture.</p>
                     )}
                   </div>
-
                 </div>
               </div>
             )}
