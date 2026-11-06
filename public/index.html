@@ -38,22 +38,50 @@
         e.preventDefault();
         if (!username.trim()) return;
 
-        // Auto-generate Student ID bitewe n'ishami
         const prefix = selectedCategory === 'Driving Laws' ? 'DRV' : selectedCategory === 'Agriculture' ? 'AGR' : 'TVET';
         const autoStudentId = `${prefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
-        // Kubika amakuru muri localStorage
+        const userEmail = email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`;
+
+        // Kubika Session y'uwinjiye ubu
         localStorage.setItem('menya_current_user', username);
-        localStorage.setItem(`menya_student_email_${username}`, email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`);
+        localStorage.setItem(`menya_student_email_${username}`, userEmail);
         localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
         localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
         
-        const existingCount = localStorage.getItem(`menya_login_count_${username}`) || '0';
-        localStorage.setItem(`menya_login_count_${username}`, parseInt(existingCount) + 1);
+        // Incuro amaze kwinjira (Attendance / Login count)
+        const visitCountKey = `menya_visit_count_${username}`;
+        let currentVisits = parseInt(localStorage.getItem(visitCountKey) || '0') + 1;
+        localStorage.setItem(visitCountKey, currentVisits);
 
         if (profilePic) {
           localStorage.setItem(`menya_avatar_${username}`, profilePic);
         }
+
+        // Kubika abanyeshuri bose muri urufunguzo rusange (menya_all_students) kugira ngo batazima igihe cyose cyangwa code yahinduka
+        let allStudents = [];
+        try {
+          const savedAll = localStorage.getItem('menya_all_students');
+          if (savedAll) allStudents = JSON.parse(savedAll);
+        } catch(e) {}
+
+        const existingIndex = allStudents.findIndex(s => s.username === username);
+        const studentObj = {
+          username: username,
+          email: userEmail,
+          id: autoStudentId,
+          trade: selectedCategory,
+          role: username.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
+          studyCount: currentVisits
+        };
+
+        if (existingIndex >= 0) {
+          allStudents[existingIndex] = studentObj;
+        } else {
+          allStudents.push(studentObj);
+        }
+
+        localStorage.setItem('menya_all_students', JSON.stringify(allStudents));
 
         alert(isSignup ? `Konti yafunguwe neza! Student ID yawe ni ${autoStudentId}` : "Mwinjiye neza!");
         window.location.href = 'home.html';
