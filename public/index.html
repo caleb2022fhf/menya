@@ -38,40 +38,21 @@
         e.preventDefault();
         if (!username.trim()) return;
 
-        // Gukora Auto-generate ya Student ID bitewe n'ishami yiga
+        // Auto-generate Student ID bitewe n'ishami
         const prefix = selectedCategory === 'Driving Laws' ? 'DRV' : selectedCategory === 'Agriculture' ? 'AGR' : 'TVET';
         const autoStudentId = `${prefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
-        // Kubika amakuru yose ya user muri localStorage kugira ngo Control Room iyabone
+        // Kubika amakuru muri localStorage
         localStorage.setItem('menya_current_user', username);
         localStorage.setItem(`menya_student_email_${username}`, email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`);
         localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
         localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
         
-        // Kwongera incuro amaze kwinjira / kwiga (Study Count)
         const existingCount = localStorage.getItem(`menya_login_count_${username}`) || '0';
         localStorage.setItem(`menya_login_count_${username}`, parseInt(existingCount) + 1);
 
         if (profilePic) {
           localStorage.setItem(`menya_avatar_${username}`, profilePic);
-        }
-
-        // Kuzuza urutonde rusange rw'abanyeshuri (All Registered Students list for Control Room)
-        const existingUsersJson = localStorage.getItem('menya_all_students');
-        let allStudents = existingUsersJson ? JSON.parse(existingUsersJson) : [];
-        
-        // Reba niba atari mushya cyangwa niba atarimo ushyiremo
-        const userExists = allStudents.some(s => s.username === username);
-        if (!userExists) {
-          allStudents.push({
-            username: username,
-            email: email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`,
-            id: autoStudentId,
-            trade: selectedCategory,
-            role: username.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
-            studyCount: 1
-          });
-          localStorage.setItem('menya_all_students', JSON.stringify(allStudents));
         }
 
         alert(isSignup ? `Konti yafunguwe neza! Student ID yawe ni ${autoStudentId}` : "Mwinjiye neza!");
@@ -86,7 +67,7 @@
             </div>
             <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
             <p className="text-xs text-neutral-400">
-              {isSignup ? 'Fungura konti nshya y\'umunyeshuri (Auto ID)' : 'Injira muri konte yawe yo kwiga'}
+              {isSignup ? 'Fungura konti nshya y\'umunyeshuri' : 'Injira muri konte yawe yo kwiga'}
             </p>
           </div>
 
@@ -129,7 +110,6 @@
               />
             </div>
 
-            {/* Amakuru yiyongeraho igihe umunyeshuri ari kwiyandikisha (Sign Up) */}
             {isSignup && (
               <>
                 <div>
@@ -145,8 +125,8 @@
                   </select>
                 </div>
 
-                <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-[11px] text-neutral-400 flex items-center justify-between">
-                  <span>ℹ️ Student ID izakorwa na system ku buryo bwikora (Auto-generated).</span>
+                <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-[11px] text-neutral-400">
+                  ℹ️ Student ID izakorwa na system ku buryo bwikora.
                 </div>
 
                 <div>
