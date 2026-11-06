@@ -20,37 +20,32 @@
       const [studentsList, setStudentsList] = useState([]);
       
       const [timetableList, setTimetableList] = useState([
-        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Ku Mbere (Monday)", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-        { id: 2, course: "Off-Grid Solar PV Wiring", trade: "TVET Technical", day: "Ku Mbere (Monday)", time: "02:00 PM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
+        { id: 1, course: "Amategeko y'Omuhanda", trade: "Driving Laws", day: "Isomo rya 1", time: "09:00 AM", youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
       ]);
 
       const [newCourseName, setNewCourseName] = useState('');
       const [newTrade, setNewTrade] = useState('Driving Laws');
-      const [newDay, setNewDay] = useState('Ku Mbere (Monday)');
+      const [newDay, setNewDay] = useState('Isomo rya 1');
       const [newTimeSlot, setNewTimeSlot] = useState('');
       const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
 
       useEffect(() => {
-        const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
-        const category = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
-        const studentId = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026-001';
-        const loginCount = localStorage.getItem(`menya_login_count_${currentUser}`) || '3';
-        const userEmail = localStorage.getItem(`menya_student_email_${currentUser}`) || `${currentUser.toLowerCase().replace(/\s+/g, '')}@menya.rw`;
+        // Gusoma abanyeshuri bose babitswe muri menya_all_students kugira ngo batazatakara
+        let allStoredStudents = [];
+        try {
+          const savedAll = localStorage.getItem('menya_all_students');
+          if (savedAll) {
+            allStoredStudents = JSON.parse(savedAll);
+          }
+        } catch(e) {}
 
-        const loadedStudents = [
-          { 
-            username: currentUser, 
-            email: userEmail, 
-            id: studentId, 
-            trade: category, 
-            role: currentUser.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
-            studyCount: loginCount 
-          },
-          { username: "Jean Bosco", email: "bosco@gmail.com", id: "DRV-2026-009", trade: "Driving Laws", role: "Student", studyCount: "5" },
-          { username: "Marie Claire", email: "claire@gmail.com", id: "AGR-2026-041", trade: "Agriculture", role: "Student", studyCount: "2" }
-        ];
+        if (allStoredStudents.length === 0) {
+          allStoredStudents = [
+            { username: "Jean Bosco", email: "bosco@gmail.com", id: "DRV-2026-009", trade: "Driving Laws", role: "Student", studyCount: 1 }
+          ];
+        }
 
-        setStudentsList(loadedStudents);
+        setStudentsList(allStoredStudents);
 
         const savedTimetable = localStorage.getItem('menya_admin_timetable');
         if (savedTimetable) {
@@ -64,13 +59,6 @@
         e.preventDefault();
         if (!newCourseName || !newTimeSlot || !newYoutubeUrl) return;
         
-        let dIdx = 1;
-        if (newDay.includes('Kabiri')) dIdx = 2;
-        else if (newDay.includes('Gatatu')) dIdx = 3;
-        else if (newDay.includes('Kane')) dIdx = 4;
-        else if (newDay.includes('Gatanu')) dIdx = 5;
-
-        // Guhindura link isanzwe ya YouTube (watch?v=) ikaba embed URL kugira ngo izagaragare neza muri Home
         let formattedUrl = newYoutubeUrl;
         if (newYoutubeUrl.includes('watch?v=')) {
           formattedUrl = newYoutubeUrl.replace('watch?v=', 'embed/');
@@ -85,7 +73,6 @@
           category: newTrade,
           trade: newTrade,
           day: newDay,
-          dayIndex: dIdx,
           time: newTimeSlot,
           embedUrl: formattedUrl,
           youtubeUrl: formattedUrl,
@@ -99,22 +86,22 @@
         setNewCourseName('');
         setNewTimeSlot('');
         setNewYoutubeUrl('');
-        alert("Isomo na Timetable byongewe neza!");
+        alert("Isomo ryongewe neza muri database y'iri shami!");
       };
 
-      // 🗑️ Uburyo bwo Gusiba Isomo (Delete Course/Timetable)
       const handleDeleteCourse = (courseId) => {
-        if (confirm("Uremeye gusiba iri isomo kuri gahunda?")) {
+        if (confirm("Uremeye gusiba iri isomo?")) {
           const filteredList = timetableList.filter(item => item.id !== courseId);
           setTimetableList(filteredList);
           localStorage.setItem('menya_admin_timetable', JSON.stringify(filteredList));
-          alert("Isomo ryasibwe neza!");
         }
       };
 
       const handleDeleteStudent = (username) => {
         if (confirm(`Uremeye gusiba umunyeshuri ${username}?`)) {
-          setStudentsList(studentsList.filter(s => s.username !== username));
+          const updatedStudents = studentsList.filter(s => s.username !== username);
+          setStudentsList(updatedStudents);
+          localStorage.setItem('menya_all_students', JSON.stringify(updatedStudents));
         }
       };
 
@@ -142,13 +129,13 @@
                 onClick={() => setActiveTab('students')}
                 className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'students' ? 'bg-emerald-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}
               >
-                🎓 Abanyeshuri (Students Info)
+                🎓 Abanyeshuri ({studentsList.length})
               </button>
               <button
                 onClick={() => setActiveTab('timetable')}
                 className={`px-4 py-1.5 rounded-lg text-xs font-medium ${activeTab === 'timetable' ? 'bg-emerald-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}
               >
-                📅 Timetable & Course Upload
+                📅 Course Database & Upload
               </button>
               <button
                 onClick={() => window.location.href = 'home.html'}
@@ -164,8 +151,8 @@
               <div className="space-y-8">
                 <div className="flex justify-between items-center bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
                   <div>
-                    <h2 className="text-lg font-bold text-white">Amakuru y'Abanyeshuri (Student Profiles)</h2>
-                    <p className="text-xs text-neutral-400">Inkingi zose zashyizwe hamwe n'inzira zo gutandukanya amashami.</p>
+                    <h2 className="text-lg font-bold text-white">Amakuru y'Abanyeshuri (Persistent Database)</h2>
+                    <p className="text-xs text-neutral-400">Abanyeshuri bandikwa hano ntibashobora kuzima nubwo waha update code.</p>
                   </div>
                   <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/20 font-mono">
                     Total Registered: {studentsList.length}
@@ -184,7 +171,7 @@
                           <th className="p-3">Ishami (Category)</th>
                           <th className="p-3">Student ID</th>
                           <th className="p-3">Uruhare (Role)</th>
-                          <th className="p-3">Ishuro Amaze Kwiga</th>
+                          <th className="p-3">Attendance / Visited</th>
                           <th className="p-3 text-right">Ububasha (Actions)</th>
                         </tr>
                       </thead>
@@ -199,7 +186,7 @@
                               <td className="p-3 text-emerald-400">{s.trade}</td>
                               <td className="p-3 font-mono">{s.id}</td>
                               <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role}</span></td>
-                              <td className="p-3 font-mono text-center">{s.studyCount} times</td>
+                              <td className="p-3 font-mono text-center">#{s.studyCount || 1}</td>
                               <td className="p-3 text-right">
                                 <button onClick={() => handleDeleteStudent(s.username)} className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20">
                                   Siba Konti
@@ -227,7 +214,7 @@
                           <th className="p-3">Ishami (Category)</th>
                           <th className="p-3">Student ID</th>
                           <th className="p-3">Uruhare (Role)</th>
-                          <th className="p-3">Ishuro Amaze Kwiga</th>
+                          <th className="p-3">Attendance / Visited</th>
                           <th className="p-3 text-right">Ububasha (Actions)</th>
                         </tr>
                       </thead>
@@ -242,7 +229,7 @@
                               <td className="p-3 text-amber-400">{s.trade}</td>
                               <td className="p-3 font-mono">{s.id}</td>
                               <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role}</span></td>
-                              <td className="p-3 font-mono text-center">{s.studyCount} times</td>
+                              <td className="p-3 font-mono text-center">#{s.studyCount || 1}</td>
                               <td className="p-3 text-right">
                                 <button onClick={() => handleDeleteStudent(s.username)} className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20">
                                   Siba Konti
@@ -263,11 +250,11 @@
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl lg:col-span-1">
                   <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    ➕ Ongeraho Isomo & Timetable
+                    ➕ Upload Isomo rya Database
                   </h2>
                   <form onSubmit={handleAddTimetable} className="space-y-4">
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami ry'Isomo (Trade)</label>
+                      <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami (Trade)</label>
                       <select
                         value={newTrade}
                         onChange={(e) => setNewTrade(e.target.value)}
@@ -286,13 +273,13 @@
                         required
                         value={newCourseName}
                         onChange={(e) => setNewCourseName(e.target.value)}
-                        placeholder="Urugero: Traffic Signals..."
+                        placeholder="Urugero: Isomo rya 2..."
                         className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">YouTube Video Link (URL)</label>
+                      <label className="block text-xs text-neutral-400 mb-1">YouTube Embed Link (URL)</label>
                       <input
                         type="text"
                         required
@@ -304,45 +291,40 @@
                     </div>
 
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Umunsi w'Icyumweru</label>
-                      <select
+                      <label className="block text-xs text-neutral-400 mb-1">Urugero rw'Isomo (Sequence Order)</label>
+                      <input
+                        type="text"
+                        required
                         value={newDay}
                         onChange={(e) => setNewDay(e.target.value)}
+                        placeholder="Urugero: Isomo rya 1, Isomo rya 2..."
                         className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
-                      >
-                        <option value="Ku Mbere (Monday)">Ku Mbere (Monday) - Umunsi wa Mbere</option>
-                        <option value="Ku Kabiri (Tuesday)">Ku Kabiri (Tuesday)</option>
-                        <option value="Ku Gatatu (Wednesday)">Ku Gatatu (Wednesday)</option>
-                        <option value="Ku Kane (Thursday)">Ku Kane (Thursday)</option>
-                        <option value="Ku Gatanu (Friday)">Ku Gatanu (Friday)</option>
-                        <option value="Weekend">Weekend</option>
-                      </select>
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Isaha (Time Slot / Schedule Setup)</label>
+                      <label className="block text-xs text-neutral-400 mb-1">Isaha cyangwa Igihe (Time Slot)</label>
                       <input
                         type="text"
                         required
                         value={newTimeSlot}
                         onChange={(e) => setNewTimeSlot(e.target.value)}
-                        placeholder="Urugero: 09:00 AM - 10:00 AM"
+                        placeholder="Urugero: 09:00 AM"
                         className="w-full bg-black border border-neutral-800 p-2.5 rounded-xl text-xs text-white"
                       />
                     </div>
 
                     <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
-                      <span>📥 Upload Isomo & Set Up Timetable</span>
+                      <span>📥 Save Isomo muri Database</span>
                     </button>
                   </form>
                 </div>
 
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl lg:col-span-2">
-                  <h2 className="text-base font-bold text-white">Gahunda n'Amasomo byashyizweho (Buri Shami ukwaryo)</h2>
+                  <h2 className="text-base font-bold text-white">Database y'Amasomo yose (Buri Shami ukwaryo)</h2>
                   
-                  {/* Driving Laws Timetable */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase text-emerald-400">🚗 Driving Laws Courses & Schedule</h4>
+                    <h4 className="text-xs font-bold uppercase text-emerald-400">🚗 Driving Laws Database</h4>
                     {drivingTimetable.length > 0 ? (
                       drivingTimetable.map((item) => (
                         <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
@@ -365,13 +347,12 @@
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Driving Laws.</p>
+                      <p className="text-xs text-neutral-500 italic">Nta isomo riri muri Driving Laws.</p>
                     )}
                   </div>
 
-                  {/* TVET Technical Timetable */}
                   <div className="space-y-3 pt-4 border-t border-neutral-800">
-                    <h4 className="text-xs font-bold uppercase text-amber-400">⚡ TVET Technical Courses & Schedule</h4>
+                    <h4 className="text-xs font-bold uppercase text-amber-400">⚡ TVET Technical Database</h4>
                     {tvetTimetable.length > 0 ? (
                       tvetTimetable.map((item) => (
                         <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
@@ -394,13 +375,12 @@
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri TVET Technical.</p>
+                      <p className="text-xs text-neutral-500 italic">Nta isomo riri muri TVET Technical.</p>
                     )}
                   </div>
 
-                  {/* Agriculture Timetable */}
                   <div className="space-y-3 pt-4 border-t border-neutral-800">
-                    <h4 className="text-xs font-bold uppercase text-blue-400">🌾 Agriculture Courses & Schedule</h4>
+                    <h4 className="text-xs font-bold uppercase text-blue-400">🌾 Agriculture Database</h4>
                     {agriTimetable.length > 0 ? (
                       agriTimetable.map((item) => (
                         <div key={item.id} className="bg-neutral-950 border border-neutral-800 p-4 rounded-xl flex items-center justify-between">
@@ -417,13 +397,13 @@
                               onClick={() => handleDeleteCourse(item.id)} 
                               className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20 text-xs font-medium"
                             >
-                              Siba Isomo
+                              Siba Isomo rya Database
                             </button>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-neutral-500 italic">Nta isomo rirashyirwa muri Agriculture.</p>
+                      <p className="text-xs text-neutral-500 italic">Nta isomo riri muri Agriculture.</p>
                     )}
                   </div>
 
