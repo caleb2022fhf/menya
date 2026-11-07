@@ -18,8 +18,8 @@
     function ControlRoomApp() {
       const [activeTab, setActiveTab] = useState('students');
       const [studentsList, setStudentsList] = useState([]);
-      
       const [timetableList, setTimetableList] = useState([]);
+      const [loadingStudents, setLoadingStudents] = useState(true);
 
       const [newCourseName, setNewCourseName] = useState('');
       const [newTrade, setNewTrade] = useState('Driving Laws');
@@ -27,16 +27,34 @@
       const [newTimeSlot, setNewTimeSlot] = useState('');
       const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
 
-      useEffect(() => {
-        let allStoredStudents = [];
+      const fetchStudents = async () => {
+        setLoadingStudents(true);
+        try {
+          const res = await fetch('/api/students');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.students) {
+              setStudentsList(data.students);
+              setLoadingStudents(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Backend API fetch failed, falling back to localStorage:', err);
+        }
+
+        // Fallback to localStorage if API is offline
         try {
           const savedAll = localStorage.getItem('menya_all_students');
           if (savedAll) {
-            allStoredStudents = JSON.parse(savedAll);
+            setStudentsList(JSON.parse(savedAll));
           }
         } catch(e) {}
+        setLoadingStudents(false);
+      };
 
-        setStudentsList(allStoredStudents);
+      useEffect(() => {
+        fetchStudents();
 
         const savedTimetable = localStorage.getItem('menya_admin_timetable');
         if (savedTimetable) {
@@ -88,11 +106,13 @@
         }
       };
 
-      const handleDeleteStudent = (username) => {
+      const handleDeleteStudent = async (username) => {
         if (confirm(`Uremeye gusiba umunyeshuri ${username}?`)) {
           const updatedStudents = studentsList.filter(s => s.username !== username);
           setStudentsList(updatedStudents);
           localStorage.setItem('menya_all_students', JSON.stringify(updatedStudents));
+          
+          // Optional: Call API to delete from backend database if endpoint supports it
         }
       };
 
@@ -126,6 +146,13 @@
                 📅 Course Database & Upload
               </button>
               <button
+                onClick={fetchStudents}
+                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-xs text-emerald-400 rounded-lg font-medium"
+                title="Refresh online database"
+              >
+                🔄 Refresh
+              </button>
+              <button
                 onClick={() => window.location.href = 'home.html'}
                 className="text-xs text-neutral-400 hover:text-white px-3 py-1.5 bg-neutral-800 rounded-lg"
               >
@@ -139,8 +166,8 @@
               <div className="space-y-6">
                 <div className="flex justify-between items-center bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
                   <div>
-                    <h2 className="text-lg font-bold text-white">Amakuru y'Abanyeshuri Bose (All Students Database)</h2>
-                    <p className="text-xs text-neutral-400">Abanyeshuri bose banditse muri system baragaragara muri iyi mesa imwe.</p>
+                    <h2 className="text-lg font-bold text-white">Amakuru y'Abanyeshuri Bose (Online Database)</h2>
+                    <p className="text-xs text-neutral-400">Abanyeshuri bose banditse kuri interineti cyangwa muri system baragaragara hano.</p>
                   </div>
                   <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/20 font-mono">
                     Total Registered: {studentsList.length}
@@ -161,17 +188,19 @@
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-neutral-800">
-                        {studentsList.length > 0 ? (
+                        {loadingStudents ? (
+                          <tr><td colSpan="6" className="p-6 text-center text-neutral-400">Biracyashakirwa amakuru kuri interineti...</td></tr>
+                        ) : studentsList.length > 0 ? (
                           studentsList.map((s, idx) => (
                             <tr key={idx} className="hover:bg-neutral-950/50">
                               <td className="p-3">
                                 <div className="font-bold text-white">{s.username}</div>
                                 <div className="text-[10px] text-neutral-400">{s.email}</div>
                               </td>
-                              <td className="p-3 text-emerald-400 font-medium">{s.trade}</td>
+                              <td className="p-3 text-emerald-400 font-medium">{s.trade || s.category}</td>
                               <td className="p-3 font-mono">{s.id}</td>
-                              <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role}</span></td>
-                              <td className="p-3 font-mono text-center text-amber-400 font-bold">#{s.studyCount || 1}</td>
+                              <td className="p-3"><span className="px-2 py-0.5 bg-neutral-800 rounded text-[10px]">{s.role || 'Student'}</span></td>
+                              <td className="p-3 font-mono text-center text-amber-400 font-bold">#{s.studyCount || s.study_count || 1}</td>
                               <td className="p-3 text-right">
                                 <button onClick={() => handleDeleteStudent(s.username)} className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20">
                                   Siba Konti
