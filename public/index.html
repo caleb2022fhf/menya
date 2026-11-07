@@ -22,6 +22,7 @@
       const [password, setPassword] = useState('');
       const [selectedCategory, setSelectedCategory] = useState('Driving Laws');
       const [profilePic, setProfilePic] = useState('');
+      const [loading, setLoading] = useState(false);
 
       const handleImageUpload = (e) => {
         const file = e.target.files[0];
@@ -34,23 +35,53 @@
         }
       };
 
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
         if (!username.trim()) return;
+
+        setLoading(true);
 
         const prefix = selectedCategory === 'Driving Laws' ? 'DRV' : selectedCategory === 'Agriculture' ? 'AGR' : 'TVET';
         const autoStudentId = `${prefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
         const userEmail = email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`;
 
-        localStorage.setItem('menya_current_user', username);
-        localStorage.setItem(`menya_student_email_${username}`, userEmail);
-        localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
-        localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
-        
         const visitCountKey = `menya_visit_count_${username}`;
         let currentVisits = parseInt(localStorage.getItem(visitCountKey) || '0') + 1;
         localStorage.setItem(visitCountKey, currentVisits);
 
+        const studentObj = {
+          username: username.trim(),
+          email: userEmail,
+          password: password, // Send to backend for auth/creation
+          id: autoStudentId,
+          trade: selectedCategory,
+          role: userEmail.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
+          studyCount: currentVisits,
+          avatar: profilePic || null,
+          createdAt: new Date().toISOString()
+        };
+
+        try {
+          // 1. Send data to central API so it is visible online to Super Admin across all devices
+          const response = await fetch('/api/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: isSignup ? 'signup' : 'login', ...studentObj }),
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            console.warn('Backend API notice:', errData.message || 'Saving locally fallback');
+          }
+        } catch (error) {
+          console.warn('Network error, saving locally fallback:', error);
+        }
+
+        // 2. Save locally for instant client-side session access
+        localStorage.setItem('menya_current_user', username);
+        localStorage.setItem(`menya_student_email_${username}`, userEmail);
+        localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
+        localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
         if (profilePic) {
           localStorage.setItem(`menya_avatar_${username}`, profilePic);
         }
@@ -62,23 +93,14 @@
         } catch(e) {}
 
         const existingIndex = allStudents.findIndex(s => s.username === username);
-        const studentObj = {
-          username: username,
-          email: userEmail,
-          id: autoStudentId,
-          trade: selectedCategory,
-          role: username.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
-          studyCount: currentVisits
-        };
-
         if (existingIndex >= 0) {
-          allStudents[existingIndex] = studentObj;
+          allStudents[existingIndex] = { ...allStudents[existingIndex], ...studentObj };
         } else {
           allStudents.push(studentObj);
         }
-
         localStorage.setItem('menya_all_students', JSON.stringify(allStudents));
 
+        setLoading(false);
         alert(isSignup ? `Konti yafunguwe neza! Student ID yawe ni ${autoStudentId}` : "Mwinjiye neza!");
         window.location.href = 'home.html';
       };
@@ -161,8 +183,12 @@
               </>
             )}
 
-            <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl text-xs font-bold transition-all">
-              {isSignup ? 'Emeza Kwiyandikisha (Sign Up)' : 'Injira (Login)'}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white p-3 rounded-xl text-xs font-bold transition-all"
+            >
+              {loading ? 'Biracyatunganywa...' : isSignup ? 'Emeza Kwiyandikisha (Sign Up)' : 'Injira (Login)'}
             </button>
           </form>
 
