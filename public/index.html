@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MENYA AI HUB - Agriculture and Driving Laws Education">
     <title>MENYA AI HUB | Login</title>
 
     <style>
@@ -129,6 +130,11 @@
             background: #00b986;
         }
 
+        .submit-btn:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
         .switch {
             margin-top: 25px;
             font-size: 12px;
@@ -141,10 +147,6 @@
             text-decoration: none;
             font-weight: bold;
             cursor: pointer;
-        }
-
-        .switch a:hover {
-            text-decoration: underline;
         }
 
         .hidden {
@@ -166,6 +168,11 @@
             font-size: 12px;
             text-align: center;
             margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        .message.error {
+            color: #ff6464;
         }
 
         @media(max-width: 400px) {
@@ -182,7 +189,7 @@
 
     <div class="logo">M</div>
 
-    <!-- LOGIN FORM -->
+    <!-- LOGIN -->
 
     <div id="loginSection">
 
@@ -192,11 +199,11 @@
         <form class="form" id="loginForm">
 
             <div class="form-group">
-                <label>Izina ry'Umukoresha (Username)</label>
+                <label>Izina ry'Umukoresha cyangwa Email</label>
                 <input
                     type="text"
                     name="identity"
-                    placeholder="Andika izina ryawe..."
+                    placeholder="Andika username cyangwa email..."
                     autocomplete="username"
                     required>
             </div>
@@ -206,12 +213,12 @@
                 <input
                     type="password"
                     name="password"
-                    placeholder="Ijambo ry'ibanga..."
+                    placeholder="Andika password..."
                     autocomplete="current-password"
                     required>
             </div>
 
-            <button type="submit" class="submit-btn">
+            <button type="submit" class="submit-btn" id="loginButton">
                 Injira (Login)
             </button>
 
@@ -225,7 +232,7 @@
     </div>
 
 
-    <!-- REGISTRATION FORM -->
+    <!-- REGISTRATION -->
 
     <div id="registerSection" class="hidden">
 
@@ -240,6 +247,7 @@
                     type="text"
                     name="username"
                     placeholder="Andika izina ryawe..."
+                    minlength="3"
                     autocomplete="username"
                     required>
             </div>
@@ -260,8 +268,8 @@
                     type="password"
                     name="password"
                     placeholder="Hitamo ijambo ry'ibanga..."
-                    autocomplete="new-password"
                     minlength="8"
+                    autocomplete="new-password"
                     required>
             </div>
 
@@ -269,13 +277,18 @@
                 <label>Hitamo Ishami ry'Isomo (Trade / Category)</label>
                 <select name="category" required>
                     <option value="">Hitamo ishami...</option>
-                    <option value="Agriculture">Ubuhinzi (Agriculture)</option>
-                    <option value="Driving Laws">Amategeko yo mu Muhanda (Driving Laws)</option>
+                    <option value="Agriculture">
+                        Ubuhinzi (Agriculture)
+                    </option>
+                    <option value="Driving Laws">
+                        Amategeko yo mu Muhanda (Driving Laws)
+                    </option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Foto y'Umwirondoro (Profile Picture)</label>
+
                 <input
                     type="file"
                     id="profilePicture"
@@ -286,7 +299,7 @@
                 <img id="preview" alt="Profile preview">
             </div>
 
-            <button type="submit" class="submit-btn">
+            <button type="submit" class="submit-btn" id="registerButton">
                 Emeza Kwiyandikisha (Sign Up)
             </button>
 
@@ -312,13 +325,22 @@
         loginSection.classList.add("hidden");
         registerSection.classList.remove("hidden");
         message.textContent = "";
+        message.classList.remove("error");
     }
 
     function showLogin() {
         registerSection.classList.add("hidden");
         loginSection.classList.remove("hidden");
         message.textContent = "";
+        message.classList.remove("error");
     }
+
+    function showMessage(text, error = false) {
+        message.textContent = text;
+        message.classList.toggle("error", error);
+    }
+
+    // PROFILE PICTURE PREVIEW
 
     const profilePicture = document.getElementById("profilePicture");
     const preview = document.getElementById("preview");
@@ -334,30 +356,102 @@
         if (!file.type.startsWith("image/")) {
             this.value = "";
             preview.style.display = "none";
-            message.textContent = "Hitamo ifoto gusa.";
+            showMessage("Hitamo ifoto gusa.", true);
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
             this.value = "";
             preview.style.display = "none";
-            message.textContent = "Ifoto igomba kuba munsi ya 5MB.";
+            showMessage("Ifoto igomba kuba munsi ya 5MB.", true);
             return;
         }
 
         preview.src = URL.createObjectURL(file);
         preview.style.display = "block";
-        message.textContent = "";
+        showMessage("");
     });
 
-    document.getElementById("loginForm").addEventListener("submit", function(event) {
+    // LOGIN
+
+    document.getElementById("loginForm").addEventListener("submit", async function(event) {
         event.preventDefault();
-        message.textContent = "Login API ntirahuza. Tuzayihuza na database.";
+
+        const button = document.getElementById("loginButton");
+        const formData = new FormData(this);
+
+        button.disabled = true;
+        showMessage("Turimo kugenzura amakuru yawe...");
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    identity: formData.get("identity").trim(),
+                    password: formData.get("password")
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Email cyangwa password si byo.");
+            }
+
+            if (result.role === "admin") {
+                window.location.replace("/control-room.html");
+            } else if (result.role === "student") {
+                window.location.replace("/home.html");
+            } else {
+                throw new Error("Uruhare rw'uyu mukoresha ntiruzwi.");
+            }
+
+        } catch (error) {
+            showMessage(error.message || "Habaye ikibazo. Ongera ugerageze.", true);
+        } finally {
+            button.disabled = false;
+        }
     });
 
-    document.getElementById("registerForm").addEventListener("submit", function(event) {
+    // REGISTRATION
+
+    document.getElementById("registerForm").addEventListener("submit", async function(event) {
         event.preventDefault();
-        message.textContent = "Registration API ntirahuza. Tuzayihuza na database.";
+
+        const button = document.getElementById("registerButton");
+        const data = new FormData(this);
+
+        button.disabled = true;
+        showMessage("Turimo kwandikisha konti yawe...");
+
+        try {
+            const response = await fetch("/api/register", {
+                method: "POST",
+                credentials: "same-origin",
+                body: data
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Kwiyandikisha byanze.");
+            }
+
+            this.reset();
+            preview.style.display = "none";
+
+            showLogin();
+            showMessage("Konti yawe yafunguwe neza. Injira kugira ngo ukomeze.");
+
+        } catch (error) {
+            showMessage(error.message || "Habaye ikibazo. Ongera ugerageze.", true);
+        } finally {
+            button.disabled = false;
+        }
     });
 </script>
 
