@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MENYA AI HUB - Agriculture and Driving Laws Education">
+
     <title>MENYA AI HUB | Login</title>
+
+    <meta name="description" content="MENYA AI HUB - Learn Agriculture and Driving Laws">
 
     <style>
         * {
@@ -181,6 +183,25 @@
             color: #ff6464;
         }
 
+        .message-box {
+            margin-top: 15px;
+            padding: 12px;
+            border: 1px solid #493030;
+            background: #211313;
+            border-radius: 9px;
+            color: #ff7777;
+            font-size: 11px;
+            text-align: left;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .debug-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
         @media(max-width: 400px) {
             .container {
                 padding: 25px 20px;
@@ -208,7 +229,8 @@
         <form class="form" id="loginForm">
 
             <div class="form-group">
-                <label>Izina ry'Umukoresha cyangwa Email (Username / Email)</label>
+
+                <label>Izina ry'Umukoresha (Username / Email)</label>
 
                 <input
                     type="text"
@@ -216,9 +238,11 @@
                     placeholder="Andika izina ryawe..."
                     autocomplete="username"
                     required>
+
             </div>
 
             <div class="form-group">
+
                 <label>Ijambo ry'ibanga (Password)</label>
 
                 <input
@@ -227,6 +251,7 @@
                     placeholder="Andika ijambo ry'ibanga..."
                     autocomplete="current-password"
                     required>
+
             </div>
 
             <button
@@ -261,6 +286,7 @@
         <form class="form" id="registerForm">
 
             <div class="form-group">
+
                 <label>Izina ry'Umukoresha (Username)</label>
 
                 <input
@@ -271,9 +297,11 @@
                     maxlength="40"
                     autocomplete="username"
                     required>
+
             </div>
 
             <div class="form-group">
+
                 <label>Imeyili (Email Address)</label>
 
                 <input
@@ -283,9 +311,11 @@
                     maxlength="254"
                     autocomplete="email"
                     required>
+
             </div>
 
             <div class="form-group">
+
                 <label>Ijambo ry'ibanga (Password)</label>
 
                 <input
@@ -295,9 +325,11 @@
                     minlength="8"
                     autocomplete="new-password"
                     required>
+
             </div>
 
             <div class="form-group">
+
                 <label>Hitamo Ishami ry'Isomo (Trade / Category)</label>
 
                 <select name="category" required>
@@ -313,6 +345,7 @@
                     </option>
 
                 </select>
+
             </div>
 
             <div class="form-group">
@@ -348,7 +381,18 @@
 
     </section>
 
+
+    <!-- ERROR AND SUCCESS MESSAGES -->
+
     <p id="message" class="message" role="status" aria-live="polite"></p>
+
+    <div id="debugBox" class="message-box hidden">
+
+        <div class="debug-title">MENYA BACKEND DEBUG INFORMATION</div>
+
+        <div id="debugContent"></div>
+
+    </div>
 
 </div>
 
@@ -365,6 +409,9 @@
 
     const message = document.getElementById("message");
 
+    const debugBox = document.getElementById("debugBox");
+    const debugContent = document.getElementById("debugContent");
+
     const loginButton = document.getElementById("loginButton");
     const registerButton = document.getElementById("registerButton");
 
@@ -372,28 +419,57 @@
     const preview = document.getElementById("preview");
 
 
-    // SHOW LOGIN
+    // DISPLAY SUCCESS OR ERROR MESSAGE
+
+    function showMessage(text, error = false) {
+
+        message.textContent = text;
+        message.classList.toggle("error", error);
+
+    }
+
+
+    // DISPLAY BACKEND DEBUG INFORMATION
+
+    function showDebug(title, details) {
+
+        debugBox.classList.remove("hidden");
+
+        debugContent.textContent =
+            title + "\n\n" + details;
+
+    }
+
+
+    function clearMessages() {
+
+        message.textContent = "";
+        message.classList.remove("error");
+
+        debugBox.classList.add("hidden");
+        debugContent.textContent = "";
+
+    }
+
+
+    // CHANGE LOGIN AND REGISTER PAGES
 
     function showLogin() {
 
         registerSection.classList.add("hidden");
         loginSection.classList.remove("hidden");
 
-        message.textContent = "";
-        message.classList.remove("error");
+        clearMessages();
 
     }
 
-
-    // SHOW REGISTRATION
 
     function showRegister() {
 
         loginSection.classList.add("hidden");
         registerSection.classList.remove("hidden");
 
-        message.textContent = "";
-        message.classList.remove("error");
+        clearMessages();
 
     }
 
@@ -414,35 +490,43 @@
     });
 
 
-    // DISPLAY MESSAGES
-
-    function showMessage(text, error = false) {
-
-        message.textContent = text;
-        message.classList.toggle("error", error);
-
-    }
-
-
-    // SAFE JSON RESPONSE
+    // READ BACKEND RESPONSE SAFELY
 
     async function readResponse(response) {
 
-        const contentType = response.headers.get("content-type") || "";
+        const text = await response.text();
 
-        if (!contentType.includes("application/json")) {
+        let result;
+
+        try {
+
+            result = JSON.parse(text);
+
+        } catch (error) {
+
+            throw new Error(
+                "SERVER DID NOT RETURN JSON.\n" +
+                "HTTP STATUS: " + response.status + "\n" +
+                "SERVER RESPONSE: " + text.substring(0, 1000)
+            );
+
+        }
+
+        if (!response.ok || !result.success) {
 
             const error = new Error(
-                "Backend API ntisubije neza. Reba Vercel API deployment."
+                result.message || "Request failed."
             );
 
             error.status = response.status;
+            error.details = result.error || "No additional error details.";
+            error.code = result.errorCode || "";
 
             throw error;
 
         }
 
-        return await response.json();
+        return result;
 
     }
 
@@ -497,16 +581,20 @@
         preview.src = imageURL;
         preview.style.display = "block";
 
-        showMessage("");
+        clearMessages();
 
     });
 
 
+    // =====================================
     // LOGIN SYSTEM
+    // =====================================
 
     loginForm.addEventListener("submit", async function(event) {
 
         event.preventDefault();
+
+        clearMessages();
 
         const identity = this.elements.identity.value.trim();
         const password = this.elements.password.value;
@@ -536,25 +624,15 @@
                 credentials: "same-origin",
 
                 body: JSON.stringify({
-
                     identity: identity,
                     password: password
-
                 })
 
             });
 
             const result = await readResponse(response);
 
-            if (!response.ok || !result.success) {
-
-                throw new Error(
-                    result.message || "Username cyangwa password si byo."
-                );
-
-            }
-
-            // ADMIN REDIRECT
+            // ADMIN LOGIN
 
             if (result.role === "admin") {
 
@@ -566,7 +644,7 @@
 
             }
 
-            // STUDENT REDIRECT
+            // STUDENT LOGIN
 
             if (result.role === "student") {
 
@@ -578,16 +656,26 @@
 
             }
 
-            throw new Error("Uruhare rw'uyu mukoresha ntiruzwi.");
+            throw new Error("Unknown user role: " + result.role);
 
         } catch (error) {
 
-            console.error("MENYA LOGIN:", error);
+            console.error("MENYA LOGIN ERROR:", error);
 
             showMessage(
-                error.message || "Habaye ikibazo. Ongera ugerageze.",
+                "Login failed. Reba amakuru y'ikibazo hasi.",
                 true
             );
+
+            const details = [
+                "Message: " + error.message,
+                "HTTP Status: " + (error.status || "Unknown"),
+                "Error Details: " + (error.details || "Not available"),
+                "Error Code: " + (error.code || "Not available"),
+                "Time: " + new Date().toISOString()
+            ].join("\n");
+
+            showDebug("LOGIN ERROR DETAILS", details);
 
         } finally {
 
@@ -599,11 +687,15 @@
     });
 
 
+    // =====================================
     // REGISTRATION SYSTEM
+    // =====================================
 
     registerForm.addEventListener("submit", async function(event) {
 
         event.preventDefault();
+
+        clearMessages();
 
         const file = profilePicture.files[0];
 
@@ -647,7 +739,7 @@
             });
 
 
-            // SEND REGISTRATION DATA TO TURSO BACKEND
+            // SEND DATA TO BACKEND
 
             const response = await fetch("/api/register", {
 
@@ -678,29 +770,35 @@
 
             const result = await readResponse(response);
 
-            if (!response.ok || !result.success) {
 
-                throw new Error(
-                    result.message || "Kwiyandikisha byanze."
-                );
+            // REGISTRATION SUCCESS
+
+            if (result.success) {
+
+                showMessage("Konti yawe yafunguwe neza!");
+
+                window.location.replace("/home.html");
 
             }
 
-
-            // SUCCESSFUL REGISTRATION
-
-            showMessage("Konti yawe yafunguwe neza!");
-
-            window.location.replace("/home.html");
-
         } catch (error) {
 
-            console.error("MENYA REGISTRATION:", error);
+            console.error("MENYA REGISTRATION ERROR:", error);
 
             showMessage(
-                error.message || "Habaye ikibazo. Ongera ugerageze.",
+                "Registration failed. Reba amakuru y'ikibazo hasi.",
                 true
             );
+
+            const details = [
+                "Message: " + error.message,
+                "HTTP Status: " + (error.status || "Unknown"),
+                "Error Details: " + (error.details || "Not available"),
+                "Error Code: " + (error.code || "Not available"),
+                "Time: " + new Date().toISOString()
+            ].join("\n");
+
+            showDebug("REGISTRATION ERROR DETAILS", details);
 
         } finally {
 
