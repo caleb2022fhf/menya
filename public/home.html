@@ -1,368 +1,425 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menya AI Hub - Home</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MENYA - Learn Agriculture and Driving Laws online.">
+    <title>MENYA | Learning Platform</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7faf7;
+            color: #17251b;
+        }
+
+        header {
+            height: 75px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 7%;
+            box-shadow: 0 2px 12px #00000010;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 30px;
+            font-weight: bold;
+            color: #176b35;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #83c441;
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #344438;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: #238b46;
+        }
+
+        .header-btn {
+            background: #176b35;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .menu {
+            display: none;
+            border: none;
+            background: none;
+            font-size: 27px;
+            cursor: pointer;
+            color: #176b35;
+        }
+
+        .hero {
+            padding: 85px 8%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 50px;
+            background: #eaf5e9;
+        }
+
+        .hero-label {
+            color: #268448;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 12px;
+        }
+
+        .hero h1 {
+            font-size: 55px;
+            line-height: 1.2;
+            margin: 20px 0;
+        }
+
+        .hero h1 span {
+            color: #268448;
+        }
+
+        .hero p {
+            color: #66736a;
+            line-height: 1.8;
+            font-size: 15px;
+            max-width: 480px;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            background: #176b35;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 25px;
+            font-weight: bold;
+        }
+
+        .hero img {
+            width: 100%;
+            height: 390px;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .section {
+            padding: 75px 8%;
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .heading small {
+            color: #268448;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .heading h2 {
+            font-size: 32px;
+            margin: 12px 0;
+        }
+
+        .heading p {
+            color: #788078;
+            font-size: 14px;
+        }
+
+        .courses {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .course {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px #00000009;
+        }
+
+        .course img {
+            width: 100%;
+            height: 230px;
+            object-fit: cover;
+        }
+
+        .course-content {
+            padding: 25px;
+        }
+
+        .course-content small {
+            color: #268448;
+            font-weight: bold;
+        }
+
+        .course-content h3 {
+            font-size: 22px;
+            margin: 12px 0;
+        }
+
+        .course-content p {
+            color: #758078;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .course-content a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #176b35;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .about {
+            background: #eaf5e9;
+            text-align: center;
+        }
+
+        .about p {
+            max-width: 650px;
+            margin: 15px auto;
+            color: #637066;
+            line-height: 1.9;
+        }
+
+        footer {
+            background: #102b1b;
+            color: white;
+            text-align: center;
+            padding: 35px 15px;
+        }
+
+        footer p {
+            font-size: 13px;
+            margin-top: 12px;
+            color: #c1d1c4;
+        }
+
+        @media(max-width: 750px) {
+            header {
+                padding: 0 5%;
+            }
+
+            .menu {
+                display: block;
+            }
+
+            nav {
+                display: none;
+                position: absolute;
+                top: 75px;
+                left: 0;
+                width: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 20px;
+                gap: 22px;
+            }
+
+            nav.active {
+                display: flex;
+            }
+
+            .header-btn {
+                display: none;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+                padding: 55px 6%;
+            }
+
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .hero img {
+                height: 270px;
+            }
+
+            .courses {
+                grid-template-columns: 1fr;
+            }
+
+            .section {
+                padding: 60px 6%;
+            }
+
+            .heading h2 {
+                font-size: 26px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-black text-gray-100 font-sans selection:bg-emerald-500 selection:text-black">
-  <div id="home-root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+<body>
 
-    function HomeApp() {
-      const currentUser = localStorage.getItem('menya_current_user') || 'Umunyeshuri';
-      const studentCategory = localStorage.getItem(`menya_student_category_${currentUser}`) || 'Driving Laws';
-      const studentIdNum = localStorage.getItem(`menya_student_id_${currentUser}`) || 'TVET-2026';
-      
-      const visitCount = parseInt(localStorage.getItem(`menya_visit_count_${currentUser}`) || '1');
+<header>
+    <a href="home.html" class="logo">MENYA<span>.</span></a>
 
-      const [userAvatar, setUserAvatar] = useState('');
-      const [todayCourse, setTodayCourse] = useState(null);
+    <button class="menu" id="menuButton">☰</button>
 
-      const [isTimerRunning, setIsTimerRunning] = useState(false);
-      const [timeLeft, setTimeLeft] = useState(25 * 60); 
-      const [mode, setMode] = useState('study'); 
-      const [selectedAnswers, setSelectedAnswers] = useState({});
+    <nav id="navigation">
+        <a href="home.html">Home</a>
+        <a href="#courses">Courses</a>
+        <a href="#about">About</a>
+    </nav>
 
-      const [showAdminModal, setShowAdminModal] = useState(false);
-      const [passwordInput, setPasswordInput] = useState('');
-      const [authError, setAuthError] = useState(false);
+    <a href="#courses" class="header-btn">Start Learning</a>
+</header>
 
-      const [chatInput, setChatInput] = useState('');
-      const [isAiThinking, setIsAiThinking] = useState(false);
-      const [messages, setMessages] = useState([
-        { role: 'assistant', text: `Muraho ${currentUser}! Nitwa Menya AI. Wabaza ikibazo cyose kijyanye n'isomo ryawe hano.` }
-      ]);
+<main>
 
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
-            e.preventDefault();
-            setShowAdminModal(true);
-          }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-      }, []);
+    <section class="hero">
+        <div>
+            <span class="hero-label">WELCOME TO MENYA</span>
 
-      useEffect(() => {
-        const savedAvatar = localStorage.getItem(`menya_avatar_${currentUser}`);
-        if (savedAvatar) {
-          setUserAvatar(savedAvatar);
-        } else {
-          setUserAvatar(`https://ui-avatars.com/api/?name=${currentUser}&background=0D9488&color=fff`);
-        }
+            <h1>Learn Today.<br><span>Build Tomorrow.</span></h1>
 
-        const adminTimetableJson = localStorage.getItem('menya_admin_timetable');
-        let currentCoursesList = [];
-        
-        if (adminTimetableJson) {
-          try {
-            currentCoursesList = JSON.parse(adminTimetableJson);
-          } catch(e) {}
-        }
+            <p>
+                Welcome to MENYA, your online learning platform.
+                Discover agriculture and driving laws through
+                educational lessons and videos.
+            </p>
 
-        // Gufata GUSA amasomo ahuye n'ishami ry'umunyeshuri (nka Agriculture, Driving Laws, cyangwa TVET)
-        const studentCourses = currentCoursesList.filter(c => {
-          const courseTrade = (c.trade || c.category || '').toLowerCase();
-          const studentTrade = studentCategory.toLowerCase();
-          return courseTrade.includes(studentTrade) || studentTrade.includes(courseTrade);
-        });
-        
-        if (studentCourses.length > 0) {
-          // Guhitamo video ijyanye n'incuro umunyeshuri agezeho (Attendance / visitCount)
-          let courseIndex = (visitCount - 1) < studentCourses.length 
-            ? (visitCount - 1) 
-            : (studentCourses.length - 1);
-          
-          setTodayCourse(studentCourses[courseIndex]);
-        } else {
-          setTodayCourse(null); // Nta somo rirashyirwa muri iri shami na Admin
-        }
-      }, [currentUser, studentCategory, visitCount]);
-
-      useEffect(() => {
-        let timer = null;
-        if (isTimerRunning) {
-          timer = setInterval(() => {
-            setTimeLeft(prev => {
-              if (prev > 1) {
-                return prev - 1;
-              } else {
-                if (mode === 'study') {
-                  alert("Iminota 25 y'isomo irangiye! Ubu twinjiye muri Quiz y'iminota 10.");
-                  setMode('quiz');
-                  return 10 * 60; 
-                } else {
-                  alert("Iminota 10 ya Quiz irangiye! System igiye gukora Auto-Submit.");
-                  handleFinalSubmit();
-                  return 0;
-                }
-              }
-            });
-          }, 1000);
-        }
-        return () => clearInterval(timer);
-      }, [isTimerRunning, mode]);
-
-      const handleFinalSubmit = () => {
-        alert("Quiz yawe yakiriwe neza!");
-        if (currentUser.toLowerCase() !== 'aimecaleb05@gmail.com') {
-          localStorage.removeItem('menya_current_user');
-          window.location.href = 'index.html';
-        } else {
-          alert("Wowe uri Admin (Aime Caleb), ntusohoka.");
-          setMode('study');
-          setIsTimerRunning(false);
-          setTimeLeft(25 * 60);
-        }
-      };
-
-      const handleStartLesson = () => {
-        if (!isTimerRunning && mode === 'study') {
-          setIsTimerRunning(true);
-        }
-      };
-
-      const formatTime = (secs) => {
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
-      };
-
-      const handleAdminLogin = (e) => {
-        e.preventDefault();
-        if (passwordInput === 'Caleb@2026') {
-          window.location.href = 'control-room.html';
-        } else {
-          setAuthError(true);
-        }
-      };
-
-      const handleLogout = () => {
-        localStorage.removeItem('menya_current_user');
-        window.location.href = 'index.html';
-      };
-
-      const handleSendQuestion = async (e) => {
-        e.preventDefault();
-        if (!chatInput.trim() || isAiThinking) return;
-
-        const userText = chatInput;
-        setChatInput('');
-        setMessages(prev => [...prev, { role: 'user', text: userText }]);
-        setIsAiThinking(true);
-
-        setTimeout(() => {
-          let aiReply = `Menya AI: Ku kibazo cyawe cyo muri ${studentCategory}, witondere gukurikiza amabwiriza y'isomo.`;
-          if (userText.toLowerCase().includes('kigali') || userText.toLowerCase().includes('muvuduku')) {
-            aiReply = "Menya AI: Umuvuduku wemewe mu Mujyi wa Kigali ni 40 km/h ku binyabiziga n'amapikipiki muri rusange.";
-          }
-          setMessages(prev => [...prev, { role: 'assistant', text: aiReply }]);
-          setIsAiThinking(false);
-        }, 800);
-      };
-
-      return (
-        <div className="min-h-screen bg-black text-white font-sans flex flex-col">
-          <header className="border-b border-neutral-800 bg-neutral-950 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
-                M
-              </div>
-              <h1 className="text-base font-bold tracking-tight text-white">
-                MENYA <span className="text-emerald-400 text-xs font-mono">AI HUB (RWANDA)</span>
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-xl">
-                <img
-                  src={userAvatar}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border border-emerald-500/50"
-                />
-                <div className="text-xs">
-                  <strong className="text-emerald-400 block">{currentUser}</strong>
-                  <span className="text-[10px] text-neutral-400 font-mono">ID: {studentIdNum} | Ishami: {studentCategory} | Attendance: #{visitCount}</span>
-                </div>
-              </div>
-
-              <button onClick={handleLogout} className="text-xs text-red-400 hover:underline px-3 py-1.5 bg-red-500/10 rounded-xl border border-red-500/20">
-                Sohoka
-              </button>
-            </div>
-          </header>
-
-          <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8 space-y-6">
-              {todayCourse ? (
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 space-y-4 shadow-xl">
-                  <div className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
-                    <div>
-                      <span className="text-xs text-emerald-400 font-mono uppercase">
-                        📚 Isomo ry'Attendance yawe (#{visitCount}) - Ishami: {todayCourse.trade || studentCategory}
-                      </span>
-                      <div className="text-xl font-bold font-mono text-white">
-                        {mode === 'study' ? (
-                          isTimerRunning ? `📖 Kwiga (25 min): ${formatTime(timeLeft)}` : "📖 Kanda Play ku video kugira ngo timer itangire"
-                        ) : (
-                          `✍️ Quiz (10 min): ${formatTime(timeLeft)}`
-                        )}
-                      </div>
-                    </div>
-                    
-                    {!isTimerRunning && mode === 'study' && (
-                      <button 
-                        onClick={handleStartLesson}
-                        className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold transition-all"
-                      >
-                        ▶ Tangira Kwiga
-                      </button>
-                    )}
-                  </div>
-
-                  {mode === 'study' ? (
-                    <div 
-                      onClick={handleStartLesson} 
-                      className="relative aspect-video bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center cursor-pointer"
-                    >
-                      {todayCourse.embedUrl || todayCourse.youtubeUrl ? (
-                        <iframe 
-                          src={todayCourse.embedUrl || todayCourse.youtubeUrl} 
-                          className="w-full h-full border-0" 
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                          allowFullScreen
-                        ></iframe>
-                      ) : (
-                        <div className="text-xs text-neutral-400 p-4 text-center">
-                          Nta video y'isomo yashyizweho muri iri shami. Jya muri Control Room wongereho isomo.
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-neutral-950 p-5 rounded-xl border border-neutral-800 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-emerald-400">Quiz y'Isomo (Iminota 10)</h3>
-                        <span className="text-xs text-neutral-400 font-mono">Auto-submit niba timer irangiye</span>
-                      </div>
-
-                      {todayCourse.quiz && todayCourse.quiz.length > 0 ? (
-                        todayCourse.quiz.map((qObj, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <p className="text-xs font-medium text-white">{idx + 1}. {qObj.q}</p>
-                            <div className="grid grid-cols-1 gap-2">
-                              {qObj.options.map((opt, oIdx) => (
-                                <button 
-                                  key={oIdx} 
-                                  onClick={() => setSelectedAnswers({...selectedAnswers, [idx]: oIdx})} 
-                                  className={`p-2.5 rounded-lg text-xs text-left border transition-all ${selectedAnswers[idx] === oIdx ? 'bg-emerald-600/30 border-emerald-500 text-white font-bold' : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:border-neutral-700'}`}
-                                >
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-neutral-400">Ntamibazo ya Quiz yashyizwe kuri iri somo. Ushobora gukora Submit.</p>
-                      )}
-
-                      <div className="pt-4 border-t border-neutral-800 flex justify-end">
-                        <button 
-                          onClick={handleFinalSubmit} 
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all"
-                        >
-                          Emeza no Kohereza Quiz (Submit Quiz)
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <span className="text-[10px] text-emerald-400 font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">{todayCourse.trade || todayCourse.category}</span>
-                    <h2 className="text-base font-bold text-white mt-1">{todayCourse.course || todayCourse.title}</h2>
-                    <p className="text-xs text-neutral-400 mt-1">{todayCourse.description || "Isomo rishya ryashyizweho na Admin."}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 text-center text-neutral-500 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-2">
-                  <p className="text-sm font-bold text-white">Nta somo riraboneka muri iri shami ({studentCategory}) kuri Attendance #{visitCount}.</p>
-                  <p className="text-xs">Jya muri Control Room wongereho amasomo y'iri shami kugira ngo abanyeshuri bayabone.</p>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-4 flex flex-col h-[700px] bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-4 border-b border-neutral-800 bg-neutral-950 text-xs font-bold text-emerald-400 flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Menya Assistant (AI)
-                </span>
-                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">Active</span>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((m, i) => (
-                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${m.role === 'user' ? 'bg-emerald-600 text-white font-medium' : 'bg-neutral-950 border border-neutral-800 text-neutral-200'}`}>
-                      {m.text}
-                    </div>
-                  </div>
-                ))}
-                {isAiThinking && (
-                  <div className="text-xs text-emerald-400 animate-pulse font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Menya AI irimo gusubiza...
-                  </div>
-                )}
-              </div>
-
-              <form onSubmit={handleSendQuestion} className="p-3 border-t border-neutral-800 bg-neutral-950 flex gap-2">
-                <input 
-                  type="text" 
-                  value={chatInput} 
-                  onChange={(e) => setChatInput(e.target.value)} 
-                  placeholder="Baza ikibazo cyawe hano..." 
-                  className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" 
-                />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold">
-                  Ohereza
-                </button>
-              </form>
-            </div>
-          </main>
-
-          {showAdminModal && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 relative shadow-2xl">
-                <button onClick={() => setShowAdminModal(false)} className="absolute top-4 right-4 text-neutral-400 hover:text-white">✕</button>
-                <form onSubmit={handleAdminLogin} className="space-y-4">
-                  <h3 className="text-base font-bold text-white">Admin Control Room Login</h3>
-                  <p className="text-xs text-neutral-400">Injiza PIN (Caleb@2026) kugira ngo winjire muri Control Room.</p>
-                  <input 
-                    type="password" 
-                    value={passwordInput} 
-                    onChange={(e) => setPasswordInput(e.target.value)} 
-                    placeholder="Injiza PIN..." 
-                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500" 
-                    autoFocus 
-                  />
-                  {authError && <p className="text-xs text-red-500">PIN si yo! Ongera ugerageze.</p>}
-                  <button type="submit" className="w-full bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold">Fungura Control Room</button>
-                </form>
-              </div>
-            </div>
-          )}
+            <a href="#courses" class="hero-btn">
+                Explore Courses →
+            </a>
         </div>
-      );
-    }
 
-    ReactDOM.createRoot(document.getElementById('home-root')).render(<HomeApp />);
-  </script>
+        <img
+            src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=85"
+            alt="Agricultural landscape">
+    </section>
+
+    <section class="section" id="courses">
+
+        <div class="heading">
+            <small>LEARNING CATEGORIES</small>
+            <h2>Choose What You Want to Learn</h2>
+            <p>Improve your knowledge through our learning categories.</p>
+        </div>
+
+        <div class="courses">
+
+            <article class="course">
+                <img
+                    src="https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?auto=format&fit=crop&w=900&q=85"
+                    alt="Agriculture">
+
+                <div class="course-content">
+                    <small>01 - AGRICULTURE</small>
+                    <h3>Agriculture Education</h3>
+
+                    <p>
+                        Learn crop production, livestock farming,
+                        soil management, irrigation and modern
+                        agricultural techniques.
+                    </p>
+
+                    <a href="agriculture.html">
+                        Learn Agriculture →
+                    </a>
+                </div>
+            </article>
+
+            <article class="course">
+                <img
+                    src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=900&q=85"
+                    alt="Driving">
+
+                <div class="course-content">
+                    <small>02 - DRIVING LAWS</small>
+                    <h3>Driving Laws Education</h3>
+
+                    <p>
+                        Understand road signs, traffic rules,
+                        road safety and driving responsibilities.
+                    </p>
+
+                    <a href="driving.html">
+                        Learn Driving Laws →
+                    </a>
+                </div>
+            </article>
+
+        </div>
+    </section>
+
+    <section class="section about" id="about">
+        <div class="heading">
+            <small>ABOUT OUR PLATFORM</small>
+            <h2>Why MENYA?</h2>
+
+            <p>
+                MENYA is designed to make learning easier and
+                more accessible. Our goal is to provide educational
+                knowledge through organized lessons and videos.
+            </p>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <a href="home.html" class="logo" style="color:white;">MENYA<span>.</span></a>
+    <p>Learn Today. Build Tomorrow.</p>
+    <p>© 2026 MENYA. All rights reserved.</p>
+</footer>
+
+<script>
+    const menuButton = document.getElementById("menuButton");
+    const navigation = document.getElementById("navigation");
+
+    menuButton.addEventListener("click", function() {
+        navigation.classList.toggle("active");
+
+        menuButton.textContent =
+            navigation.classList.contains("active") ? "✕" : "☰";
+    });
+
+    navigation.querySelectorAll("a").forEach(function(link) {
+        link.addEventListener("click", function() {
+            navigation.classList.remove("active");
+            menuButton.textContent = "☰";
+        });
+    });
+</script>
+
 </body>
 </html>
