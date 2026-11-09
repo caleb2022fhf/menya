@@ -1,209 +1,365 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menya AI Hub - Login / Sign Up</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MENYA AI HUB | Login</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #080808;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 25px 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 430px;
+            background: #171717;
+            border: 1px solid #303030;
+            border-radius: 17px;
+            padding: 30px 32px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border: 1px solid #008f68;
+            background: #10382d;
+            color: #00d69a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+            font-weight: bold;
+            margin: 0 auto 13px;
+        }
+
+        h1 {
+            font-size: 21px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 28px;
+        }
+
+        .form {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 19px;
+        }
+
+        label {
+            display: block;
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        input, select {
+            width: 100%;
+            height: 43px;
+            padding: 0 13px;
+            border: 1px solid #333;
+            border-radius: 12px;
+            background: #050505;
+            color: white;
+            outline: none;
+            font-size: 12px;
+        }
+
+        input:focus, select:focus {
+            border-color: #00c98c;
+        }
+
+        input::placeholder {
+            color: #aaa;
+        }
+
+        input[type="file"] {
+            padding: 7px;
+            color: #aaa;
+            height: auto;
+            min-height: 43px;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #009c70;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 7px 12px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 43px;
+            border: none;
+            border-radius: 12px;
+            background: #009d70;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .submit-btn:hover {
+            background: #00b986;
+        }
+
+        .switch {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+        }
+
+        .switch a {
+            color: #00d69a;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .switch a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #preview {
+            display: none;
+            width: 65px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin: 12px auto;
+            border: 2px solid #00c98c;
+        }
+
+        .message {
+            color: #00d69a;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        @media(max-width: 400px) {
+            .container {
+                padding: 25px 20px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-black text-gray-100 font-sans flex items-center justify-center min-h-screen p-4">
-  <div id="index-root"></div>
 
-  <script type="text/babel">
-    const { useState } = React;
+<body>
 
-    function IndexAuthApp() {
-      const [isSignup, setIsSignup] = useState(false);
-      const [username, setUsername] = useState('');
-      const [email, setEmail] = useState('');
-      const [password, setPassword] = useState('');
-      const [selectedCategory, setSelectedCategory] = useState('Driving Laws');
-      const [profilePic, setProfilePic] = useState('');
-      const [loading, setLoading] = useState(false);
+<div class="container">
 
-      const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setProfilePic(reader.result);
-          };
-          reader.readAsDataURL(file);
-        }
-      };
+    <div class="logo">M</div>
 
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!username.trim()) return;
+    <!-- LOGIN FORM -->
 
-        setLoading(true);
+    <div id="loginSection">
 
-        const prefix = selectedCategory === 'Driving Laws' ? 'DRV' : selectedCategory === 'Agriculture' ? 'AGR' : 'TVET';
-        const autoStudentId = `${prefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const userEmail = email || `${username.toLowerCase().replace(/\s+/g, '')}@menya.rw`;
+        <h1>MENYA AI HUB</h1>
+        <p class="subtitle">Injira muri konte yawe yo kwiga</p>
 
-        const visitCountKey = `menya_visit_count_${username}`;
-        let currentVisits = parseInt(localStorage.getItem(visitCountKey) || '0') + 1;
-        localStorage.setItem(visitCountKey, currentVisits);
+        <form class="form" id="loginForm">
 
-        const studentObj = {
-          username: username.trim(),
-          email: userEmail,
-          password: password, // Send to backend for auth/creation
-          id: autoStudentId,
-          trade: selectedCategory,
-          role: userEmail.toLowerCase() === 'aimecaleb05@gmail.com' ? 'Super Admin' : 'Student',
-          studyCount: currentVisits,
-          avatar: profilePic || null,
-          createdAt: new Date().toISOString()
-        };
-
-        try {
-          // 1. Send data to central API so it is visible online to Super Admin across all devices
-          const response = await fetch('/api/students', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: isSignup ? 'signup' : 'login', ...studentObj }),
-          });
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            console.warn('Backend API notice:', errData.message || 'Saving locally fallback');
-          }
-        } catch (error) {
-          console.warn('Network error, saving locally fallback:', error);
-        }
-
-        // 2. Save locally for instant client-side session access
-        localStorage.setItem('menya_current_user', username);
-        localStorage.setItem(`menya_student_email_${username}`, userEmail);
-        localStorage.setItem(`menya_student_category_${username}`, selectedCategory);
-        localStorage.setItem(`menya_student_id_${username}`, autoStudentId);
-        if (profilePic) {
-          localStorage.setItem(`menya_avatar_${username}`, profilePic);
-        }
-
-        let allStudents = [];
-        try {
-          const savedAll = localStorage.getItem('menya_all_students');
-          if (savedAll) allStudents = JSON.parse(savedAll);
-        } catch(e) {}
-
-        const existingIndex = allStudents.findIndex(s => s.username === username);
-        if (existingIndex >= 0) {
-          allStudents[existingIndex] = { ...allStudents[existingIndex], ...studentObj };
-        } else {
-          allStudents.push(studentObj);
-        }
-        localStorage.setItem('menya_all_students', JSON.stringify(allStudents));
-
-        setLoading(false);
-        alert(isSignup ? `Konti yafunguwe neza! Student ID yawe ni ${autoStudentId}` : "Mwinjiye neza!");
-        window.location.href = 'home.html';
-      };
-
-      return (
-        <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl">
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold mx-auto text-lg">
-              M
-            </div>
-            <h1 className="text-xl font-bold text-white">MENYA AI HUB</h1>
-            <p className="text-xs text-neutral-400">
-              {isSignup ? 'Fungura konti nshya y\'umunyeshuri' : 'Injira muri konte yawe yo kwiga'}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs text-neutral-400 mb-1">Izina ry'Umunyeshuri (Username)</label>
-              <input
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Andika izina ryawe..."
-                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            {isSignup && (
-              <div>
-                <label className="block text-xs text-neutral-400 mb-1">Imeyili (Email Address)</label>
+            <div class="form-group">
+                <label>Izina ry'Umukoresha (Username)</label>
                 <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="urugero: caleb@gmail.com"
-                  className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs text-neutral-400 mb-1">Ijambo ry'Ibanga (Password)</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-              />
+                    type="text"
+                    name="identity"
+                    placeholder="Andika izina ryawe..."
+                    autocomplete="username"
+                    required>
             </div>
 
-            {isSignup && (
-              <>
-                <div>
-                  <label className="block text-xs text-neutral-400 mb-1">Hitamo Ishami ry'Isomo (Trade / Category)</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="Driving Laws">Amategeko y'Omuhanda (Driving Laws)</option>
-                    <option value="TVET Technical">TVET Solar & Technical</option>
-                    <option value="Agriculture">Ubuhinzi n'Ubworozi (Agriculture)</option>
-                  </select>
-                </div>
+            <div class="form-group">
+                <label>Ijambo ry'ibanga (Password)</label>
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Ijambo ry'ibanga..."
+                    autocomplete="current-password"
+                    required>
+            </div>
 
-                <div>
-                  <label className="block text-xs text-neutral-400 mb-1">Ifoto y'Umwirondoro (Profile Picture)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="w-full bg-black border border-neutral-800 p-2 rounded-xl text-xs text-neutral-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500"
-                  />
-                </div>
-              </>
-            )}
-
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white p-3 rounded-xl text-xs font-bold transition-all"
-            >
-              {loading ? 'Biracyatunganywa...' : isSignup ? 'Emeza Kwiyandikisha (Sign Up)' : 'Injira (Login)'}
+            <button type="submit" class="submit-btn">
+                Injira (Login)
             </button>
-          </form>
 
-          <div className="text-center text-xs text-neutral-400">
-            {isSignup ? (
-              <p>Ufite konti? <button onClick={() => setIsSignup(false)} className="text-emerald-400 font-bold hover:underline">Injira hano</button></p>
-            ) : (
-              <p>Uri umunyeshuri mushya? <button onClick={() => setIsSignup(true)} className="text-emerald-400 font-bold hover:underline">Fungura Konti</button></p>
-            )}
-          </div>
-        </div>
-      );
+        </form>
+
+        <p class="switch">
+            Uri umunyeshuri mushya?
+            <a onclick="showRegister()">Fungura Konti</a>
+        </p>
+
+    </div>
+
+
+    <!-- REGISTRATION FORM -->
+
+    <div id="registerSection" class="hidden">
+
+        <h1>MENYA AI HUB</h1>
+        <p class="subtitle">Fungura konti nshya y'umunyeshuri</p>
+
+        <form class="form" id="registerForm">
+
+            <div class="form-group">
+                <label>Izina ry'Umukoresha (Username)</label>
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="Andika izina ryawe..."
+                    autocomplete="username"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Imeyili (Email Address)</label>
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Andika email yawe..."
+                    autocomplete="email"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Ijambo ry'ibanga (Password)</label>
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Hitamo ijambo ry'ibanga..."
+                    autocomplete="new-password"
+                    minlength="8"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Hitamo Ishami ry'Isomo (Trade / Category)</label>
+                <select name="category" required>
+                    <option value="">Hitamo ishami...</option>
+                    <option value="Agriculture">Ubuhinzi (Agriculture)</option>
+                    <option value="Driving Laws">Amategeko yo mu Muhanda (Driving Laws)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Foto y'Umwirondoro (Profile Picture)</label>
+                <input
+                    type="file"
+                    id="profilePicture"
+                    name="profilePicture"
+                    accept="image/*"
+                    required>
+
+                <img id="preview" alt="Profile preview">
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Emeza Kwiyandikisha (Sign Up)
+            </button>
+
+        </form>
+
+        <p class="switch">
+            Ufite konti?
+            <a onclick="showLogin()">Injira hano</a>
+        </p>
+
+    </div>
+
+    <p id="message" class="message"></p>
+
+</div>
+
+<script>
+    const loginSection = document.getElementById("loginSection");
+    const registerSection = document.getElementById("registerSection");
+    const message = document.getElementById("message");
+
+    function showRegister() {
+        loginSection.classList.add("hidden");
+        registerSection.classList.remove("hidden");
+        message.textContent = "";
     }
 
-    ReactDOM.createRoot(document.getElementById('index-root')).render(<IndexAuthApp />);
-  </script>
+    function showLogin() {
+        registerSection.classList.add("hidden");
+        loginSection.classList.remove("hidden");
+        message.textContent = "";
+    }
+
+    const profilePicture = document.getElementById("profilePicture");
+    const preview = document.getElementById("preview");
+
+    profilePicture.addEventListener("change", function() {
+        const file = this.files[0];
+
+        if (!file) {
+            preview.style.display = "none";
+            return;
+        }
+
+        if (!file.type.startsWith("image/")) {
+            this.value = "";
+            preview.style.display = "none";
+            message.textContent = "Hitamo ifoto gusa.";
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            this.value = "";
+            preview.style.display = "none";
+            message.textContent = "Ifoto igomba kuba munsi ya 5MB.";
+            return;
+        }
+
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        message.textContent = "";
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        message.textContent = "Login API ntirahuza. Tuzayihuza na database.";
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        message.textContent = "Registration API ntirahuza. Tuzayihuza na database.";
+    });
+</script>
+
 </body>
 </html>
