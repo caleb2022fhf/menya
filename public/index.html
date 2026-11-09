@@ -59,6 +59,7 @@
             color: #aaa;
             font-size: 13px;
             margin-bottom: 28px;
+            line-height: 1.6;
         }
 
         .form {
@@ -149,8 +150,12 @@
             cursor: pointer;
         }
 
+        .switch a:hover {
+            text-decoration: underline;
+        }
+
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         #preview {
@@ -169,6 +174,7 @@
             text-align: center;
             margin-top: 15px;
             line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
         .message.error {
@@ -189,81 +195,99 @@
 
     <div class="logo">M</div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN SECTION -->
 
-    <div id="loginSection">
+    <section id="loginSection">
 
         <h1>MENYA AI HUB</h1>
-        <p class="subtitle">Injira muri konte yawe yo kwiga</p>
+
+        <p class="subtitle">
+            Injira muri konte yawe yo kwiga
+        </p>
 
         <form class="form" id="loginForm">
 
             <div class="form-group">
-                <label>Izina ry'Umukoresha cyangwa Email</label>
+                <label>Izina ry'Umukoresha cyangwa Email (Username / Email)</label>
+
                 <input
                     type="text"
                     name="identity"
-                    placeholder="Andika username cyangwa email..."
+                    placeholder="Andika izina ryawe..."
                     autocomplete="username"
                     required>
             </div>
 
             <div class="form-group">
                 <label>Ijambo ry'ibanga (Password)</label>
+
                 <input
                     type="password"
                     name="password"
-                    placeholder="Andika password..."
+                    placeholder="Andika ijambo ry'ibanga..."
                     autocomplete="current-password"
                     required>
             </div>
 
-            <button type="submit" class="submit-btn" id="loginButton">
+            <button
+                type="submit"
+                class="submit-btn"
+                id="loginButton">
+
                 Injira (Login)
+
             </button>
 
         </form>
 
         <p class="switch">
             Uri umunyeshuri mushya?
-            <a onclick="showRegister()">Fungura Konti</a>
+            <a href="#" id="openRegister">Fungura Konti</a>
         </p>
 
-    </div>
+    </section>
 
 
-    <!-- REGISTRATION -->
+    <!-- REGISTRATION SECTION -->
 
-    <div id="registerSection" class="hidden">
+    <section id="registerSection" class="hidden">
 
         <h1>MENYA AI HUB</h1>
-        <p class="subtitle">Fungura konti nshya y'umunyeshuri</p>
+
+        <p class="subtitle">
+            Fungura konti nshya y'umunyeshuri
+        </p>
 
         <form class="form" id="registerForm">
 
             <div class="form-group">
                 <label>Izina ry'Umukoresha (Username)</label>
+
                 <input
                     type="text"
                     name="username"
                     placeholder="Andika izina ryawe..."
                     minlength="3"
+                    maxlength="40"
                     autocomplete="username"
                     required>
             </div>
 
             <div class="form-group">
                 <label>Imeyili (Email Address)</label>
+
                 <input
                     type="email"
                     name="email"
                     placeholder="Andika email yawe..."
+                    maxlength="254"
                     autocomplete="email"
                     required>
             </div>
 
             <div class="form-group">
                 <label>Ijambo ry'ibanga (Password)</label>
+
                 <input
                     type="password"
                     name="password"
@@ -275,184 +299,420 @@
 
             <div class="form-group">
                 <label>Hitamo Ishami ry'Isomo (Trade / Category)</label>
+
                 <select name="category" required>
+
                     <option value="">Hitamo ishami...</option>
+
                     <option value="Agriculture">
                         Ubuhinzi (Agriculture)
                     </option>
+
                     <option value="Driving Laws">
                         Amategeko yo mu Muhanda (Driving Laws)
                     </option>
+
                 </select>
             </div>
 
             <div class="form-group">
+
                 <label>Foto y'Umwirondoro (Profile Picture)</label>
 
                 <input
                     type="file"
                     id="profilePicture"
                     name="profilePicture"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     required>
 
-                <img id="preview" alt="Profile preview">
+                <img id="preview" alt="Profile picture preview">
+
             </div>
 
-            <button type="submit" class="submit-btn" id="registerButton">
+            <button
+                type="submit"
+                class="submit-btn"
+                id="registerButton">
+
                 Emeza Kwiyandikisha (Sign Up)
+
             </button>
 
         </form>
 
         <p class="switch">
             Ufite konti?
-            <a onclick="showLogin()">Injira hano</a>
+            <a href="#" id="openLogin">Injira hano</a>
         </p>
 
-    </div>
+    </section>
 
-    <p id="message" class="message"></p>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
 
 </div>
 
+
 <script>
+
+    // PAGE ELEMENTS
+
     const loginSection = document.getElementById("loginSection");
     const registerSection = document.getElementById("registerSection");
+
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+
     const message = document.getElementById("message");
 
-    function showRegister() {
-        loginSection.classList.add("hidden");
-        registerSection.classList.remove("hidden");
-        message.textContent = "";
-        message.classList.remove("error");
-    }
-
-    function showLogin() {
-        registerSection.classList.add("hidden");
-        loginSection.classList.remove("hidden");
-        message.textContent = "";
-        message.classList.remove("error");
-    }
-
-    function showMessage(text, error = false) {
-        message.textContent = text;
-        message.classList.toggle("error", error);
-    }
-
-    // PROFILE PICTURE PREVIEW
+    const loginButton = document.getElementById("loginButton");
+    const registerButton = document.getElementById("registerButton");
 
     const profilePicture = document.getElementById("profilePicture");
     const preview = document.getElementById("preview");
 
+
+    // SHOW LOGIN
+
+    function showLogin() {
+
+        registerSection.classList.add("hidden");
+        loginSection.classList.remove("hidden");
+
+        message.textContent = "";
+        message.classList.remove("error");
+
+    }
+
+
+    // SHOW REGISTRATION
+
+    function showRegister() {
+
+        loginSection.classList.add("hidden");
+        registerSection.classList.remove("hidden");
+
+        message.textContent = "";
+        message.classList.remove("error");
+
+    }
+
+
+    document.getElementById("openRegister").addEventListener("click", function(event) {
+
+        event.preventDefault();
+        showRegister();
+
+    });
+
+
+    document.getElementById("openLogin").addEventListener("click", function(event) {
+
+        event.preventDefault();
+        showLogin();
+
+    });
+
+
+    // DISPLAY MESSAGES
+
+    function showMessage(text, error = false) {
+
+        message.textContent = text;
+        message.classList.toggle("error", error);
+
+    }
+
+
+    // SAFE JSON RESPONSE
+
+    async function readResponse(response) {
+
+        const contentType = response.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+
+            const error = new Error(
+                "Backend API ntisubije neza. Reba Vercel API deployment."
+            );
+
+            error.status = response.status;
+
+            throw error;
+
+        }
+
+        return await response.json();
+
+    }
+
+
+    // PROFILE PICTURE PREVIEW
+
     profilePicture.addEventListener("change", function() {
+
         const file = this.files[0];
 
         if (!file) {
+
             preview.style.display = "none";
             return;
+
         }
 
-        if (!file.type.startsWith("image/")) {
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+
             this.value = "";
             preview.style.display = "none";
-            showMessage("Hitamo ifoto gusa.", true);
+
+            showMessage("Hitamo ifoto ya JPG, PNG cyangwa WEBP.", true);
+
             return;
+
         }
 
-        if (file.size > 5 * 1024 * 1024) {
+        if (file.size > 1.5 * 1024 * 1024) {
+
             this.value = "";
             preview.style.display = "none";
-            showMessage("Ifoto igomba kuba munsi ya 5MB.", true);
+
+            showMessage("Ifoto igomba kuba munsi ya 1.5MB.", true);
+
             return;
+
         }
 
-        preview.src = URL.createObjectURL(file);
+        const imageURL = URL.createObjectURL(file);
+
+        preview.onload = function() {
+            URL.revokeObjectURL(imageURL);
+        };
+
+        preview.src = imageURL;
         preview.style.display = "block";
+
         showMessage("");
+
     });
 
-    // LOGIN
 
-    document.getElementById("loginForm").addEventListener("submit", async function(event) {
+    // LOGIN SYSTEM
+
+    loginForm.addEventListener("submit", async function(event) {
+
         event.preventDefault();
 
-        const button = document.getElementById("loginButton");
-        const formData = new FormData(this);
+        const identity = this.elements.identity.value.trim();
+        const password = this.elements.password.value;
 
-        button.disabled = true;
+        if (!identity || !password) {
+
+            showMessage("Uzuza amakuru yose.", true);
+            return;
+
+        }
+
+        loginButton.disabled = true;
+        loginButton.textContent = "Turimo kugenzura...";
+
         showMessage("Turimo kugenzura amakuru yawe...");
 
         try {
+
             const response = await fetch("/api/login", {
+
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 credentials: "same-origin",
+
                 body: JSON.stringify({
-                    identity: formData.get("identity").trim(),
-                    password: formData.get("password")
+
+                    identity: identity,
+                    password: password
+
                 })
+
             });
 
-            const result = await response.json();
+            const result = await readResponse(response);
 
             if (!response.ok || !result.success) {
-                throw new Error(result.message || "Email cyangwa password si byo.");
+
+                throw new Error(
+                    result.message || "Username cyangwa password si byo."
+                );
+
             }
+
+            // ADMIN REDIRECT
 
             if (result.role === "admin") {
+
+                showMessage("Murakaza neza Admin!");
+
                 window.location.replace("/control-room.html");
-            } else if (result.role === "student") {
-                window.location.replace("/home.html");
-            } else {
-                throw new Error("Uruhare rw'uyu mukoresha ntiruzwi.");
+
+                return;
+
             }
 
+            // STUDENT REDIRECT
+
+            if (result.role === "student") {
+
+                showMessage("Murakaza neza!");
+
+                window.location.replace("/home.html");
+
+                return;
+
+            }
+
+            throw new Error("Uruhare rw'uyu mukoresha ntiruzwi.");
+
         } catch (error) {
-            showMessage(error.message || "Habaye ikibazo. Ongera ugerageze.", true);
+
+            console.error("MENYA LOGIN:", error);
+
+            showMessage(
+                error.message || "Habaye ikibazo. Ongera ugerageze.",
+                true
+            );
+
         } finally {
-            button.disabled = false;
+
+            loginButton.disabled = false;
+            loginButton.textContent = "Injira (Login)";
+
         }
+
     });
 
-    // REGISTRATION
 
-    document.getElementById("registerForm").addEventListener("submit", async function(event) {
+    // REGISTRATION SYSTEM
+
+    registerForm.addEventListener("submit", async function(event) {
+
         event.preventDefault();
 
-        const button = document.getElementById("registerButton");
-        const data = new FormData(this);
+        const file = profilePicture.files[0];
 
-        button.disabled = true;
+        if (!file) {
+
+            showMessage("Hitamo ifoto yawe.", true);
+            return;
+
+        }
+
+        if (file.size > 1.5 * 1024 * 1024) {
+
+            showMessage("Ifoto igomba kuba munsi ya 1.5MB.", true);
+            return;
+
+        }
+
+        registerButton.disabled = true;
+        registerButton.textContent = "Turimo kwandikisha...";
+
         showMessage("Turimo kwandikisha konti yawe...");
 
         try {
-            const response = await fetch("/api/register", {
-                method: "POST",
-                credentials: "same-origin",
-                body: data
+
+            // CONVERT IMAGE TO BASE64
+
+            const profileImage = await new Promise((resolve, reject) => {
+
+                const reader = new FileReader();
+
+                reader.onload = function() {
+                    resolve(reader.result);
+                };
+
+                reader.onerror = function() {
+                    reject(new Error("Ntibyashobotse gusoma ifoto."));
+                };
+
+                reader.readAsDataURL(file);
+
             });
 
-            const result = await response.json();
+
+            // SEND REGISTRATION DATA TO TURSO BACKEND
+
+            const response = await fetch("/api/register", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                credentials: "same-origin",
+
+                body: JSON.stringify({
+
+                    username: this.elements.username.value.trim(),
+
+                    email: this.elements.email.value.trim(),
+
+                    password: this.elements.password.value,
+
+                    category: this.elements.category.value,
+
+                    profileImage: profileImage
+
+                })
+
+            });
+
+
+            const result = await readResponse(response);
 
             if (!response.ok || !result.success) {
-                throw new Error(result.message || "Kwiyandikisha byanze.");
+
+                throw new Error(
+                    result.message || "Kwiyandikisha byanze."
+                );
+
             }
 
-            this.reset();
-            preview.style.display = "none";
 
-            showLogin();
-            showMessage("Konti yawe yafunguwe neza. Injira kugira ngo ukomeze.");
+            // SUCCESSFUL REGISTRATION
+
+            showMessage("Konti yawe yafunguwe neza!");
+
+            window.location.replace("/home.html");
 
         } catch (error) {
-            showMessage(error.message || "Habaye ikibazo. Ongera ugerageze.", true);
+
+            console.error("MENYA REGISTRATION:", error);
+
+            showMessage(
+                error.message || "Habaye ikibazo. Ongera ugerageze.",
+                true
+            );
+
         } finally {
-            button.disabled = false;
+
+            registerButton.disabled = false;
+
+            registerButton.textContent =
+                "Emeza Kwiyandikisha (Sign Up)";
+
         }
+
     });
+
 </script>
 
 </body>
